@@ -14,7 +14,7 @@
 | 1 | Normalização Textual | 0 | Motor de limpeza sem LLM + API + UI mínima | ✅ concluída |
 | 2 | Integração Multi-LLM | 1 | `LLMProvider` + 5 adaptadores + resiliência | ✅ concluída |
 | 3 | Humanização Semântica | 2 | Motor de revisão + perfis + validação | ✅ concluída |
-| 4 | Sistema de Templates ABNT | 1 | Templates versionados + gerador de estrutura | ⛔ aguardando |
+| 4 | Sistema de Templates ABNT | 1 | Templates versionados + gerador de estrutura | ✅ concluída |
 | 5 | Citações, Referências e Validador | 3, 4 | NBR 6023/10520 + relatórios auditáveis | ⛔ aguardando |
 | 6 | Geração de Documentos | 4, 5 | DOCX nativo + PDF + histórico | ⛔ aguardando |
 | 7 | Interface e Experiência | 1–6 | 11 páginas + editor comparativo | ⛔ aguardando |
@@ -250,7 +250,7 @@ preservando significado e informações verificáveis.
 
 ---
 
-## Onda 4 — Sistema de Templates ABNT
+## Onda 4 — Sistema de Templates ABNT ✅
 
 **Objetivo:** desenvolver o motor de estruturação e formatação acadêmica.
 
@@ -303,20 +303,20 @@ e fontes · citações longas · notas de rodapé · referências.
 
 ### Critérios de aceite
 
-- [ ] Os 8 tipos de template existem, são versionados e declaram suas fontes.
-- [ ] As margens da NBR 14724:2024 estão parametrizadas (anverso: 3/3/2/2 cm;
+- [x] Os 8 tipos de template existem, são versionados e declaram suas fontes.
+- [x] As margens da NBR 14724:2024 estão parametrizadas (anverso: 3/3/2/2 cm;
       verso: 3 cm à direita e superior, 2 cm à esquerda e inferior) e **não**
       estão hard-coded.
-- [ ] Um perfil institucional (UFMS/UFGD) sobrescreve apenas as regras que
+- [x] Um perfil institucional (UFMS/UFGD) sobrescreve apenas as regras que
       define, e o conflito com a norma geral é **registrado**, não ocultado.
-- [ ] Não há conformidade presumida com manual institucional: o relatório
+- [x] Não há conformidade presumida com manual institucional: o relatório
       declara, por regra, a fonte e o grau de confiabilidade.
-- [ ] A ficha catalográfica é **reservada** (campo vazio), nunca preenchida
+- [x] A ficha catalográfica é **reservada** (campo vazio), nunca preenchida
       com dados fictícios.
-- [ ] O sumário gerado é um **campo TOC real** do Word, não texto digitado.
-- [ ] `ruff check`, `ruff format --check`, `mypy`, `pytest` verdes;
+- [x] O sumário gerado é um **campo TOC real** do Word, não texto digitado.
+- [x] `ruff check`, `ruff format --check`, `mypy`, `pytest` verdes;
       cobertura ≥ 80% em `app/services/academic/`.
-- [ ] Relatório da onda em `docs/waves/onda-4.md`.
+- [x] Relatório da onda em `docs/waves/onda-4.md`.
 
 ---
 

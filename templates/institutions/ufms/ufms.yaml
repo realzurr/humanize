@@ -1,0 +1,31 @@
+# =============================================================================
+# Perfil institucional — UFMS (Universidade Federal de Mato Grosso do Sul)
+#
+# Declara apenas as regras que substitui (ADR-0007). A fonte é o manual
+# institucional disponível, que ainda referencia a NBR 14724:2011 (superada
+# pela 14724:2024) — o sistema sinaliza essa desatualização no relatório.
+# =============================================================================
+
+id: inst.ufms.geral
+version: 0.1.0
+kind: instituicao
+institution: UFMS
+title: Perfil institucional — UFMS
+description: >-
+  Perfil institucional da UFMS. Sobrescreve a fonte do corpo do texto para
+  Arial, conforme o manual de trabalhos acadêmicos da instituição.
+
+sources:
+  - norm: ABNT NBR 14724
+    edition: "2011"
+    section: "5"
+    url: https://bibliotecas.ufms.br/divisao-de-acesso-a-informacao/normatizacao-de-trabalhos/
+    consulted_at: "2026-10-21"
+    confidence: medium
+    note: >-
+      Manual de Trabalhos Acadêmicos segundo a NBR 14724/2011. Fonte
+      desatualizada — a norma vigente é a 14724:2024. Confirmar com a
+      biblioteca.
+
+typography:
+  font: Arial

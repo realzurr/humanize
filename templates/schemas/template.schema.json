@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://humaniza-academico.local/schemas/template.schema.json",
   "title": "Template de formatação acadêmica",
-  "description": "Parametrização de um template ABNT ou de um perfil institucional. Toda regra DEVE declarar sua fonte (norma, edição, seção, url, data de consulta e grau de confiança).",
+  "description": "Parametrização de um template ABNT ou de um perfil institucional. Toda regra DEVE declarar sua fonte (norma, edição, seção, url, data de consulta e grau de confiança). Templates completos (kind diferente de 'instituicao') devem fornecer page, typography e elements; perfis institucionais declaram apenas id, version, kind, sources, institution e as regras que substituem.",
   "type": "object",
-  "required": ["id", "version", "kind", "sources", "page", "typography", "elements"],
+  "required": ["id", "version", "kind", "sources"],
   "additionalProperties": false,
   "properties": {
     "id": {

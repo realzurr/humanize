@@ -1,0 +1,21 @@
+# =============================================================================
+# Template — Relatório técnico/científico (ABNT NBR 10719:2025)
+# =============================================================================
+
+id: abnt.relatorio
+version: 0.1.0
+kind: relatorio
+title: Relatório técnico-científico
+description: >-
+  Estrutura de relatório técnico/científico conforme a ABNT NBR 10719:2025,
+  herdando a formatação do template geral.
+extends: abnt.general
+
+sources:
+  - norm: ABNT NBR 10719
+    edition: "2025"
+    section: "todas"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high
+    note: Informação e documentação — relatório técnico e/ou científico.

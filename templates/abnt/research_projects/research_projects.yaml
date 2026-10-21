@@ -1,0 +1,21 @@
+# =============================================================================
+# Template — Projeto de pesquisa (ABNT NBR 15287:2025)
+# =============================================================================
+
+id: abnt.projeto-pesquisa
+version: 0.1.0
+kind: projeto_pesquisa
+title: Projeto de pesquisa
+description: >-
+  Estrutura de projeto de pesquisa conforme a ABNT NBR 15287:2025 (3ª edição),
+  herdando a formatação do template geral.
+extends: abnt.general
+
+sources:
+  - norm: ABNT NBR 15287
+    edition: "2025"
+    section: "todas"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high
+    note: Projeto de pesquisa — apresentação. 3ª edição.

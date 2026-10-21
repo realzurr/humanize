@@ -1,0 +1,19 @@
+# =============================================================================
+# Template — Dissertação de mestrado (ABNT NBR 14724:2024)
+# =============================================================================
+
+id: abnt.dissertacao
+version: 0.1.0
+kind: dissertacao
+title: Dissertação
+description: >-
+  Estrutura de dissertação de mestrado conforme a ABNT NBR 14724:2024.
+extends: abnt.general
+
+sources:
+  - norm: ABNT NBR 14724
+    edition: "2024"
+    section: "5"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high

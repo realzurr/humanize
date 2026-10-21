@@ -1,0 +1,32 @@
+# =============================================================================
+# Template — Artigo científico (ABNT NBR 6022:2018)
+# =============================================================================
+
+id: abnt.artigo
+version: 0.1.0
+kind: artigo
+title: Artigo científico
+description: >-
+  Estrutura de artigo científico conforme a ABNT NBR 6022:2018, herdando a
+  formatação de página e tipografia do template geral (NBR 14724:2024).
+extends: abnt.general
+
+sources:
+  - norm: ABNT NBR 6022
+    edition: "2018"
+    section: "todas"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high
+    note: Apresentação de artigos em publicação periódica científica.
+
+elements:
+  - { id: titulo, kind: title_page, required: true, numbered: false }
+  - { id: autor, kind: title_page, required: true, numbered: false }
+  - { id: resumo, kind: abstract_pt, required: true, numbered: false }
+  - { id: abstract, kind: abstract_en, required: true, numbered: false }
+  - { id: palavras_chave, kind: keywords, required: true, numbered: false }
+  - { id: introducao, kind: introduction, required: true, level: 1 }
+  - { id: desenvolvimento, kind: development, required: true, level: 1 }
+  - { id: conclusao, kind: conclusion, required: true, level: 1 }
+  - { id: referencias, kind: references, required: true, numbered: false }

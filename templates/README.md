@@ -46,20 +46,39 @@ templates/
 
 ## Estado atual
 
-Apenas o esqueleto `abnt/general/general.yaml` existe, como referência de
-estrutura. **Os templates completos são implementados na Onda 4**, após
-revalidação das edições vigentes (ver
-[`../docs/standards/ABNT_NORMS_RESEARCH.md`](../docs/standards/ABNT_NORMS_RESEARCH.md)).
+Os oito tipos de template ABNT e os dois perfis institucionais existem e são
+versionados (Onda 4):
 
-## Validação
+| Template | ID | Base normativa |
+|---|---|---|
+| Trabalho acadêmico geral | `abnt.general` | NBR 14724:2024 |
+| Artigo científico | `abnt.artigo` | NBR 6022:2018 |
+| TCC | `abnt.tcc` | NBR 14724:2024 |
+| Monografia | `abnt.monografia` | NBR 14724:2024 + NBR 6029:2023 |
+| Dissertação | `abnt.dissertacao` | NBR 14724:2024 |
+| Tese | `abnt.tese` | NBR 14724:2024 |
+| Projeto de pesquisa | `abnt.projeto-pesquisa` | NBR 15287:2025 |
+| Relatório técnico | `abnt.relatorio` | NBR 10719:2025 |
+| Perfil UFMS | `inst.ufms.geral` | manual institucional (⚠ 14724:2011) |
+| Perfil UFGD | `inst.ufgd.geral` | material institucional (2025) |
+
+O carregador e o resolvedor estão em
+`backend/app/services/academic/templates.py`; a API em
+`/api/v1/templates` (listagem, detalhe e `resolve` com perfil institucional).
+
+## Validação e upload de perfil institucional
+
+O schema `template.schema.json` aceita `kind: instituicao`. Um perfil
+institucional declara **apenas** `id`, `version`, `kind`, `sources`,
+`institution` e as regras que substitui (`page`, `typography`, `elements`,
+`styles`, `sections`) — o restante é herdado do template do tipo de documento
+(`extends`). O carregador valida a estrutura em tempo de execução; a
+validação por `jsonschema` é opcional:
 
 ```bash
-# Validar um template contra o schema
+# Validar um template contra o schema (requer jsonschema)
 python -c "import json, yaml, jsonschema; \
   schema=json.load(open('templates/schemas/template.schema.json')); \
   data=yaml.safe_load(open('templates/abnt/general/general.yaml')); \
   jsonschema.validate(data, schema); print('válido')"
 ```
-
-> `jsonschema` ainda não está declarado em `pyproject.toml`; será adicionado
-> na Onda 4, junto com o carregador de templates.

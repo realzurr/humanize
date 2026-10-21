@@ -1,0 +1,21 @@
+# =============================================================================
+# Template — Monografia (ABNT NBR 14724:2024 + NBR 6029:2023)
+# =============================================================================
+
+id: abnt.monografia
+version: 0.1.0
+kind: monografia
+title: Monografia
+description: >-
+  Estrutura de monografia conforme a ABNT NBR 14724:2024, com referência à
+  NBR 6029:2023 (livros e folhetos).
+extends: abnt.general
+
+sources:
+  - norm: ABNT NBR 6029
+    edition: "2023"
+    section: "todas"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high
+    note: Informação e documentação — livros e folhetos.

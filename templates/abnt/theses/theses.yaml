@@ -1,0 +1,19 @@
+# =============================================================================
+# Template — Tese de doutorado (ABNT NBR 14724:2024)
+# =============================================================================
+
+id: abnt.tese
+version: 0.1.0
+kind: tese
+title: Tese
+description: >-
+  Estrutura de tese de doutorado conforme a ABNT NBR 14724:2024.
+extends: abnt.general
+
+sources:
+  - norm: ABNT NBR 14724
+    edition: "2024"
+    section: "5"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high

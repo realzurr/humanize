@@ -3,11 +3,11 @@
 Plataforma web modular para **normalização textual**, **humanização semântica** e
 **formatação acadêmica ABNT** de documentos acadêmicos em português brasileiro.
 
-> **Estado do projeto:** Onda 3 (Humanização Semântica) concluída.
-> A normalização textual determinística, a camada de provedores de LLM e a
-> humanização semântica (com máscara e validação de dados protegidos) estão
-> ativas. As ondas seguintes (templates, citações, exportação) ainda não
-> foram implementadas — ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
+> **Estado do projeto:** Onda 4 (Sistema de Templates ABNT) concluída.
+> Normalização textual, integração multi-LLM, humanização semântica e o motor
+> de templates ABNT (estrutura, numeração, paginação e estilos
+> determinísticos) estão ativos. As ondas seguintes (citações, exportação)
+> ainda não foram implementadas — ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 
@@ -180,6 +180,7 @@ cp .env.example .env
 | 1 | Normalização textual (sem LLM) | ✅ concluída |
 | 2 | Integração multi-LLM | ✅ concluída |
 | 3 | Humanização semântica | ✅ concluída |
+| 4 | Sistema de templates ABNT | ✅ concluída |
 | 3 | Humanização semântica | ⛔ aguardando |
 | 4 | Sistema de templates ABNT | ⛔ aguardando |
 | 5 | Citações, referências e validador | ⛔ aguardando |
@@ -206,6 +207,7 @@ Detalhamento, dependências e critérios de aceite em
 | [`docs/waves/onda-1.md`](docs/waves/onda-1.md) | Relatório da Onda 1 (normalização textual) |
 | [`docs/waves/onda-2.md`](docs/waves/onda-2.md) | Relatório da Onda 2 (integração multi-LLM) |
 | [`docs/waves/onda-3.md`](docs/waves/onda-3.md) | Relatório da Onda 3 (humanização semântica) |
+| [`docs/waves/onda-4.md`](docs/waves/onda-4.md) | Relatório da Onda 4 (sistema de templates ABNT) |
 | [`AGENTS.md`](AGENTS.md) | Regras permanentes de desenvolvimento (binding) |
 
 ---

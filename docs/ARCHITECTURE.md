@@ -528,6 +528,23 @@ Normas ABNT são protegidas por direitos autorais: reproduzimos **estrutura e
 regras parametrizadas**, nunca o texto integral. O estado de verificação das
 normas está em [`standards/ABNT_NORMS_RESEARCH.md`](standards/ABNT_NORMS_RESEARCH.md).
 
+### 7.4 Motor acadêmico (`app/services/academic/`)
+
+A implementação da Onda 4 vive em `app/services/academic/`:
+
+* `templates.py` — `TemplateRegistry`: carrega os YAML, resolve a herança
+  (`extends`) e aplica o perfil institucional, produzindo `TemplateResolved`
+  com os conflitos registrados;
+* `template_model.py` — modelos Pydantic (Fonte, Margens, Pagina, Tipografia,
+  Elemento, Estilo, Conflito, Template);
+* `structure.py` — detecção determinística de seções (Markdown, numeração
+  progressiva, títulos sem indicativo);
+* `numbering.py` — numeração progressiva (NBR 6024);
+* `pagination.py` — margens anverso/verso e posição da paginação;
+* `styles.py` — resolução de estilos de título/bloco;
+* `sections.py` — classificação pré/textual/pós-textual;
+* `metadata.py` — validação de campos obrigatórios por natureza de documento.
+
 ---
 
 ## 8. Persistência
