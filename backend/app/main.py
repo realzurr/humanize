@@ -19,6 +19,7 @@ from app.core.config import get_settings
 from app.core.errors import HumanizaError
 from app.core.logging import configure_logging, get_logger
 from app.services.academic.templates import TemplateRegistry
+from app.services.document_export.writer import ExportHistoryStore
 from app.services.providers.credentials import CredentialResolver
 from app.services.providers.registry import ProviderRegistry
 from app.services.references.doi import DOIResolver
@@ -72,6 +73,10 @@ def create_app() -> FastAPI:
     app.state.doi_resolver = DOIResolver(
         timeout_seconds=settings.doi_lookup_timeout_seconds,
         user_agent=settings.doi_user_agent,
+    )
+    app.state.export_store = ExportHistoryStore(
+        settings.export_dir,
+        retention_days=settings.document_retention_days,
     )
 
     app.include_router(api_router, prefix=settings.api_prefix)

@@ -16,7 +16,7 @@
 | 3 | Humanização Semântica | 2 | Motor de revisão + perfis + validação | ✅ concluída |
 | 4 | Sistema de Templates ABNT | 1 | Templates versionados + gerador de estrutura | ✅ concluída |
 | 5 | Citações, Referências e Validador | 3, 4 | NBR 6023/10520 + relatórios auditáveis | ✅ concluída |
-| 6 | Geração de Documentos | 4, 5 | DOCX nativo + PDF + histórico | ⛔ aguardando |
+| 6 | Geração de Documentos | 4, 5 | DOCX nativo + PDF + histórico | ✅ concluída |
 | 7 | Interface e Experiência | 1–6 | 11 páginas + editor comparativo | ⛔ aguardando |
 | 8 | Segurança, Testes e Estabilização | 7 | Auth, isolamento, E2E, docs de deploy | ⛔ aguardando |
 
@@ -362,7 +362,7 @@ e fontes · citações longas · notas de rodapé · referências.
 
 ---
 
-## Onda 6 — Geração de Documentos
+## Onda 6 — Geração de Documentos ✅
 
 **Objetivo:** exportação acadêmica de qualidade.
 
@@ -392,17 +392,17 @@ DOCX de origem · **documentar diferenças e limitações** do renderizador.
 
 ### Critérios de aceite
 
-- [ ] O DOCX abre no Word e mantém estilos reais (verificável por inspeção
+- [x] O DOCX abre no Word e mantém estilos reais (verificável por inspeção
       de `styles.xml` e `document.xml`).
-- [ ] O sumário é um campo TOC real e atualiza no Word.
-- [ ] Não há simulação de alinhamento por espaços/tabulações repetidas.
-- [ ] O PDF, quando disponível, é comparado com o DOCX e as diferenças
+- [x] O sumário é um campo TOC real e atualiza no Word.
+- [x] Não há simulação de alinhamento por espaços/tabulações repetidas.
+- [x] O PDF, quando disponível, é comparado com o DOCX e as diferenças
       estão documentadas em `docs/architecture/PDF_RENDERER_NOTES.md`.
-- [ ] Sem LibreOffice disponível, a limitação é declarada e apenas
+- [x] Sem LibreOffice disponível, a limitação é declarada e apenas
       DOCX/TXT/Markdown são gerados.
-- [ ] `ruff check`, `ruff format --check`, `mypy`, `pytest` verdes;
+- [x] `ruff check`, `ruff format --check`, `mypy`, `pytest` verdes;
       cobertura ≥ 80% em `app/services/document_export/`.
-- [ ] Relatório da onda em `docs/waves/onda-6.md`.
+- [x] Relatório da onda em `docs/waves/onda-6.md`.
 
 ---
 

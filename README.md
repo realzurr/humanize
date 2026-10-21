@@ -3,12 +3,13 @@
 Plataforma web modular para **normalização textual**, **humanização semântica** e
 **formatação acadêmica ABNT** de documentos acadêmicos em português brasileiro.
 
-> **Estado do projeto:** Onda 5 (Citações, Referências e Validador ABNT) concluída.
+> **Estado do projeto:** Onda 6 (Geração de Documentos) concluída.
 > Normalização textual, integração multi-LLM, humanização semântica, o motor
-> de templates ABNT e o validador de integridade acadêmica (NBR 6023:2025 e
-> NBR 10520:2023) estão ativos. As ondas seguintes (exportação DOCX/PDF, UI
-> completa e segurança/estabilização) ainda não foram implementadas — ver
-> [`docs/ROADMAP.md`](docs/ROADMAP.md).
+> de templates ABNT, o validador de integridade acadêmica (NBR 6023:2025 e
+> NBR 10520:2023) e a exportação de documentos (DOCX nativo, PDF em processo
+> isolado, TXT, Markdown e histórico de versões) estão ativos. As ondas
+> seguintes (UI completa e segurança/estabilização) ainda não foram
+> implementadas — ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 
@@ -183,7 +184,7 @@ cp .env.example .env
 | 3 | Humanização semântica | ✅ concluída |
 | 4 | Sistema de templates ABNT | ✅ concluída |
 | 5 | Citações, referências e validador | ✅ concluída |
-| 6 | Geração de documentos (DOCX/PDF) | ⛔ aguardando |
+| 6 | Geração de documentos (DOCX/PDF) | ✅ concluída |
 | 7 | Interface e experiência do usuário | ⛔ aguardando |
 | 8 | Segurança, testes e estabilização | ⛔ aguardando |
 
@@ -208,6 +209,8 @@ Detalhamento, dependências e critérios de aceite em
 | [`docs/waves/onda-3.md`](docs/waves/onda-3.md) | Relatório da Onda 3 (humanização semântica) |
 | [`docs/waves/onda-4.md`](docs/waves/onda-4.md) | Relatório da Onda 4 (sistema de templates ABNT) |
 | [`docs/waves/onda-5.md`](docs/waves/onda-5.md) | Relatório da Onda 5 (citações, referências e validador ABNT) |
+| [`docs/waves/onda-6.md`](docs/waves/onda-6.md) | Relatório da Onda 6 (geração de documentos DOCX/PDF) |
+| [`docs/architecture/PDF_RENDERER_NOTES.md`](docs/architecture/PDF_RENDERER_NOTES.md) | Notas do renderizador de PDF e comparação DOCX↔PDF |
 | [`AGENTS.md`](AGENTS.md) | Regras permanentes de desenvolvimento (binding) |
 
 ---

@@ -573,6 +573,28 @@ A implementação da Onda 5 vive em `app/services/references/`:
   inconsistência*, *informação não verificável* ou *recomendação
   institucional* — e ação sugerida).
 
+### 7.6 Exportação de documentos (`app/services/document_export/`)
+
+A implementação da Onda 6 vive em `app/services/document_export/`:
+
+* `fields.py` — construção e extração de campos dinâmicos OpenXML reais do
+  Word (`TOC`, `PAGE`, `NUMPAGES`, `SEQ`, `STYLEREF`, `REF`), marcadores
+  (`w:bookmarkStart`/`w:bookmarkEnd`) e ativação de `w:updateFields` em
+  `settings.xml`;
+* `docx_builder.py` — geração de DOCX com estilos nativos do Word (`Normal`,
+  `Heading 1..4`, `Citacao Longa`, `Legenda`, `Fonte`, `Referencia`,
+  `Sem Indicativo`, `Nota Rodape`, `Codigo`), margens e paginação
+  parametrizadas pelo template (anverso/verso), reserva explícita da ficha
+  catalográfica (nunca fictícia), eliminação de simulação visual por
+  espaços/tabulações repetidas e inspetor XML (`inspect_docx`);
+* `pdf_builder.py` — renderização de PDF a partir do DOCX em subprocesso
+  isolado (`soffice --headless` via `asyncio.to_thread` com perfil temporário)
+  e comparador estrutural DOCX ↔ PDF (`compare_docx_and_pdf` via `pymupdf`),
+  documentado em [`architecture/PDF_RENDERER_NOTES.md`](architecture/PDF_RENDERER_NOTES.md);
+* `writer.py` — exportadores determinísticos para TXT e Markdown, gerador de
+  pré-visualização estruturada (`generate_preview`) e histórico de versões
+  exportadas com hash SHA-256 e política de retenção (`ExportHistoryStore`).
+
 ---
 
 ## 8. Persistência
