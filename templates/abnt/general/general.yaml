@@ -1,0 +1,215 @@
+# =============================================================================
+# Template base — Trabalho acadêmico geral
+#
+# Regra estrutural da Onda 4: TODA regra declara sua fonte. Este arquivo é o
+# esqueleto; a codificação completa dos templates ocorre na Onda 4, após
+# revalidação das edições vigentes (ver docs/standards/ABNT_NORMS_RESEARCH.md).
+#
+# Precedência: instituição > template do tipo de documento > norma geral.
+# =============================================================================
+
+id: abnt.general
+version: 0.1.0
+kind: trabalho_academico
+title: Trabalho acadêmico geral
+description: >-
+  Template base de trabalho acadêmico, conforme a ABNT NBR 14724:2024.
+  Serve de pai para os demais tipos (TCC, dissertação, tese, monografia,
+  artigo, projeto de pesquisa e relatório).
+
+sources:
+  - norm: ABNT NBR 14724
+    edition: "2024"
+    section: "5"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high
+    note: >-
+      Edição vigente. Contém Errata e versão corrigida (01.04.2025).
+      O identificador oficial no Catálogo ABNT deve ser confirmado
+      manualmente (pendência P-01 do levantamento de normas).
+
+  - norm: ABNT NBR 6024
+    edition: "2012"
+    section: "todas"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high
+    note: Numeração progressiva das seções.
+
+  - norm: ABNT NBR 6027
+    edition: "2012"
+    section: "todas"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high
+    note: Sumário.
+
+  - norm: ABNT NBR 6028
+    edition: "2021"
+    section: "todas"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high
+    note: Resumo, resenha e recensão — apresentação.
+
+  - norm: ABNT NBR 6023
+    edition: "2025"
+    section: "todas"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high
+    note: >-
+      Referências — terceira edição. Substitui a NBR 6023:2018, que foi
+      cancelada. A Emenda de 05/2025 precisa ser lida antes de implementar
+      a formatação de referências (pendência P-07).
+
+  - norm: ABNT NBR 10520
+    edition: "2023"
+    section: "todas"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high
+    note: Citações.
+
+  - norm: ABNT NBR 6034
+    edition: "2004"
+    section: "todas"
+    url: https://www.abntcatalogo.com.br/norma.aspx
+    consulted_at: "2026-10-21"
+    confidence: high
+    note: Índice remissivo (opcional).
+
+# -----------------------------------------------------------------------------
+# Página — NBR 14724:2024 §5.1 e §5.4
+# -----------------------------------------------------------------------------
+page:
+  size: A4
+  mirror: true # anverso/verso
+  margins_cm:
+    top_cm: 3
+    bottom_cm: 2
+    left_cm: 3
+    right_cm: 2
+  margins_verso_cm:
+    top_cm: 3
+    bottom_cm: 2
+    left_cm: 2
+    right_cm: 3
+  numbering:
+    position: top_outside # superior direito no anverso, superior esquerdo no verso
+    start_at: first_textual
+    count_pre_textual: true
+    number_pre_textual: false
+
+# -----------------------------------------------------------------------------
+# Tipografia — NBR 14724:2024 §5.2
+# -----------------------------------------------------------------------------
+typography:
+  font: Times New Roman
+  size_pt: 12
+  small_size_pt: 10
+  line_spacing: 1.5
+  paragraph_spacing_pt: 0
+  indent_cm: 1.25
+  alignment: justify
+
+# -----------------------------------------------------------------------------
+# Estrutura — NBR 14724:2024, Esquema 1
+# -----------------------------------------------------------------------------
+elements:
+  - { id: capa, kind: cover, required: true, numbered: false }
+  - { id: folha_rosto, kind: title_page, required: true, page_break: true, numbered: false }
+  - { id: folha_aprovacao, kind: approval_page, required: true, page_break: true, numbered: false }
+  - id: ficha_catalografica
+    kind: catalog_record
+    required: false
+    page_break: true
+    numbered: false
+    note: >-
+      Campo RESERVADO. A ficha catalográfica é emitida pelo serviço
+      competente da instituição. O sistema nunca gera dados fictícios
+      (ADR-0015 / risco R-28).
+  - { id: errata, kind: errata, required: false, page_break: true, numbered: false }
+  - { id: dedicatoria, kind: dedication, required: false, page_break: true, numbered: false }
+  - { id: agradecimentos, kind: acknowledgments, required: false, page_break: true, numbered: false }
+  - { id: epigrafe, kind: epigraph, required: false, page_break: true, numbered: false }
+  - { id: resumo, kind: abstract_pt, required: true, page_break: true, numbered: false }
+  - { id: abstract, kind: abstract_en, required: true, page_break: true, numbered: false }
+  - { id: palavras_chave, kind: keywords, required: true, numbered: false }
+  - { id: lista_ilustracoes, kind: list_of_illustrations, required: false, page_break: true, numbered: false }
+  - { id: lista_tabelas, kind: list_of_tables, required: false, page_break: true, numbered: false }
+  - { id: lista_abreviaturas, kind: list_of_abbreviations, required: false, page_break: true, numbered: false }
+  - { id: lista_simbolos, kind: list_of_symbols, required: false, page_break: true, numbered: false }
+  - { id: sumario, kind: table_of_contents, required: true, page_break: true, numbered: false }
+  - { id: introducao, kind: introduction, required: true, level: 1 }
+  - { id: desenvolvimento, kind: development, required: true, level: 1 }
+  - { id: conclusao, kind: conclusion, required: true, level: 1 }
+  - { id: referencias, kind: references, required: true, page_break: true, numbered: false }
+  - { id: glossario, kind: glossary, required: false, page_break: true, numbered: false }
+  - { id: apendice, kind: appendix, required: false, page_break: true, numbered: false }
+  - { id: anexo, kind: annex, required: false, page_break: true, numbered: false }
+  - { id: indice, kind: index, required: false, page_break: true, numbered: false }
+
+# -----------------------------------------------------------------------------
+# Seções — NBR 6024:2012
+# -----------------------------------------------------------------------------
+sections:
+  format: "1.1.1"
+  start_at: 1
+  include_pre_textual: false
+
+# -----------------------------------------------------------------------------
+# Estilos dos títulos — NBR 14724:2024 §5.5
+# -----------------------------------------------------------------------------
+styles:
+  heading1:
+    font_size_pt: 12
+    bold: true
+    uppercase: false
+    alignment: left
+    spacing_before_pt: 12
+    spacing_after_pt: 12
+    keep_with_next: true
+  heading2:
+    font_size_pt: 12
+    bold: true
+    alignment: left
+    spacing_before_pt: 12
+    spacing_after_pt: 12
+    keep_with_next: true
+  heading3:
+    font_size_pt: 12
+    bold: false
+    italic: true
+    alignment: left
+    spacing_before_pt: 12
+    spacing_after_pt: 12
+    keep_with_next: true
+  sem_indicativo:
+    font_size_pt: 12
+    bold: true
+    alignment: center
+    spacing_before_pt: 12
+    spacing_after_pt: 12
+  citacao_longa:
+    font_size_pt: 10
+    line_spacing: 1.0
+    alignment: justify
+    indent_cm: 4
+  legenda:
+    font_size_pt: 10
+    line_spacing: 1.0
+    alignment: left
+  fonte:
+    font_size_pt: 10
+    line_spacing: 1.0
+    alignment: left
+  referencia:
+    font_size_pt: 12
+    line_spacing: 1.0
+    alignment: left
+  nota_rodape:
+    font_size_pt: 10
+    line_spacing: 1.0
+    alignment: justify

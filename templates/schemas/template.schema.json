@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://humaniza-academico.local/schemas/template.schema.json",
+  "title": "Template de formatação acadêmica",
+  "description": "Parametrização de um template ABNT ou de um perfil institucional. Toda regra DEVE declarar sua fonte (norma, edição, seção, url, data de consulta e grau de confiança).",
+  "type": "object",
+  "required": ["id", "version", "kind", "sources", "page", "typography", "elements"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(\\.[a-z0-9-]+)+$",
+      "description": "Identificador único, ex.: 'abnt.tcc.geral' ou 'inst.ufms.geral'."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Versão semântica do template."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "trabalho_academico",
+        "artigo",
+        "tcc",
+        "monografia",
+        "dissertacao",
+        "tese",
+        "projeto_pesquisa",
+        "relatorio",
+        "livro",
+        "instituicao"
+      ]
+    },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "extends": {
+      "type": "string",
+      "description": "ID do template do qual este herda. Regras não declaradas são herdadas."
+    },
+    "institution": {
+      "type": "string",
+      "description": "Sigla da instituição, quando o template é um perfil institucional."
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/fonte" }
+    },
+    "page": { "$ref": "#/$defs/pagina" },
+    "typography": { "$ref": "#/$defs/tipografia" },
+    "elements": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/elemento" }
+    },
+    "styles": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/estilo" }
+    },
+    "sections": {
+      "type": "object",
+      "description": "Configuração de numeração progressiva de seções (NBR 6024).",
+      "properties": {
+        "format": { "type": "string", "examples": ["1", "1.1", "1.1.1"] },
+        "start_at": { "type": "integer", "minimum": 1 },
+        "include_pre_textual": { "type": "boolean" }
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "readOnly": true,
+      "description": "Conflitos detectados na resolução. Preenchido pelo sistema, nunca pelo autor do template.",
+      "items": { "$ref": "#/$defs/conflito" }
+    }
+  },
+  "$defs": {
+    "fonte": {
+      "type": "object",
+      "required": ["norm", "edition", "consulted_at", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "norm": { "type": "string", "examples": ["ABNT NBR 14724"] },
+        "edition": { "type": "string", "examples": ["2024"] },
+        "section": { "type": "string", "examples": ["5.1"] },
+        "url": { "type": "string", "format": "uri" },
+        "consulted_at": { "type": "string", "format": "date" },
+        "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+        "note": { "type": "string" }
+      }
+    },
+    "margem": {
+      "type": "object",
+      "required": ["top_cm", "bottom_cm", "left_cm", "right_cm"],
+      "additionalProperties": false,
+      "properties": {
+        "top_cm": { "type": "number", "minimum": 0, "maximum": 10 },
+        "bottom_cm": { "type": "number", "minimum": 0, "maximum": 10 },
+        "left_cm": { "type": "number", "minimum": 0, "maximum": 10 },
+        "right_cm": { "type": "number", "minimum": 0, "maximum": 10 }
+      }
+    },
+    "pagina": {
+      "type": "object",
+      "required": ["size", "margins_cm", "mirror"],
+      "additionalProperties": false,
+      "properties": {
+        "size": { "type": "string", "enum": ["A4", "Letter", "Legal"] },
+        "margins_cm": { "$ref": "#/$defs/margem" },
+        "margins_verso_cm": {
+          "$ref": "#/$defs/margem",
+          "description": "Margens da página par. Aplicado apenas quando 'mirror' é verdadeiro."
+        },
+        "mirror": {
+          "type": "boolean",
+          "description": "Impressão anverso/verso, com margens alternadas."
+        },
+        "gutter_cm": { "type": "number", "minimum": 0, "maximum": 5 },
+        "numbering": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "position": { "type": "string", "enum": ["top_right", "top_left", "top_outside", "bottom_center"] },
+            "start_at": { "type": "string", "enum": ["first_textual", "first_page"] },
+            "count_pre_textual": { "type": "boolean" },
+            "number_pre_textual": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "tipografia": {
+      "type": "object",
+      "required": ["font", "size_pt", "line_spacing"],
+      "additionalProperties": false,
+      "properties": {
+        "font": { "type": "string", "examples": ["Times New Roman"] },
+        "size_pt": { "type": "number", "minimum": 6, "maximum": 48 },
+        "line_spacing": { "type": "number", "minimum": 1, "maximum": 3 },
+        "paragraph_spacing_pt": { "type": "number", "minimum": 0 },
+        "indent_cm": { "type": "number", "minimum": 0, "maximum": 5 },
+        "alignment": { "type": "string", "enum": ["left", "right", "center", "justify"] },
+        "small_size_pt": { "type": "number", "description": "Corpo para notas, legendas e citações longas." }
+      }
+    },
+    "elemento": {
+      "type": "object",
+      "required": ["id", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "cover",
+            "title_page",
+            "approval_page",
+            "catalog_record",
+            "errata",
+            "dedication",
+            "acknowledgments",
+            "epigraph",
+            "abstract_pt",
+            "abstract_en",
+            "keywords",
+            "list_of_illustrations",
+            "list_of_tables",
+            "list_of_abbreviations",
+            "list_of_symbols",
+            "table_of_contents",
+            "introduction",
+            "development",
+            "conclusion",
+            "references",
+            "glossary",
+            "appendix",
+            "annex",
+            "index"
+          ]
+        },
+        "required": { "type": "boolean" },
+        "page_break": { "type": "boolean" },
+        "starts_on_odd_page": { "type": "boolean" },
+        "numbered": { "type": "boolean" },
+        "level": { "type": "integer", "minimum": 1, "maximum": 4 },
+        "note": {
+          "type": "string",
+          "description": "Observação, em particular quando o elemento exige dado externo (ficha catalográfica)."
+        }
+      }
+    },
+    "estilo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "font_size_pt": { "type": "number" },
+        "bold": { "type": "boolean" },
+        "italic": { "type": "boolean" },
+        "uppercase": { "type": "boolean" },
+        "alignment": { "type": "string", "enum": ["left", "right", "center", "justify"] },
+        "spacing_before_pt": { "type": "number" },
+        "spacing_after_pt": { "type": "number" },
+        "line_spacing": { "type": "number" },
+        "keep_with_next": { "type": "boolean" }
+      }
+    },
+    "conflito": {
+      "type": "object",
+      "required": ["rule_id", "norm_value", "institution_value"],
+      "additionalProperties": false,
+      "properties": {
+        "rule_id": { "type": "string" },
+        "norm_value": { "type": "string" },
+        "institution_value": { "type": "string" },
+        "norm_source": { "$ref": "#/$defs/fonte" },
+        "institution_source": { "$ref": "#/$defs/fonte" },
+        "severity": { "type": "string", "enum": ["info", "warning", "critical"] }
+      }
+    }
+  }
+}
