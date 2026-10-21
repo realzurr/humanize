@@ -56,6 +56,8 @@ backend/data/
 backend/data/exports/
 *.docx.tmp
 *.pdf.tmp
+lo_profile/
+humaniza_pdf_*/
 
 # =============================================================================
 # Testes e cobertura
@@ -137,7 +139,12 @@ temp/
 __pypackages__/
 .ipynb_checkpoints/
 .uv/
+uv.lock
 .eslintcache
 coverage/
 backend/coverage/
+.claude/
+.gemini/
+.agent/
+.cursor/
 
