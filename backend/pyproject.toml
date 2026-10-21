@@ -3,7 +3,8 @@ name = "humaniza-academico"
 version = "0.1.0"
 description = "Plataforma de normalização textual, humanização semântica e formatação acadêmica ABNT"
 requires-python = ">=3.12"
-authors = [{ name = "Humaniza Acadêmico" }]
+license = { text = "MIT" }
+authors = [{ name = "Renato Lemes Peixoto (realzurr)" }]
 
 dependencies = [
     "fastapi>=0.115",

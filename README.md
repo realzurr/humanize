@@ -3,6 +3,10 @@
 Plataforma web modular para **normalização textual**, **humanização semântica** e
 **formatação acadêmica ABNT** de documentos acadêmicos em português brasileiro.
 
+- **Autoria do projeto:** **Renato Lemes Peixoto (`realzurr`)**
+- **Licença:** [MIT License](LICENSE)
+- **Créditos e inspiração inicial:** concepção da etapa de normalização textual inspirada no projeto [`takumar-x/AI-Humanizer`](https://github.com/takumar-x/AI-Humanizer) (de `takumar-x` / Mikhail Medvedev) — reimplementada do zero (*clean-room*) e expandida para todo o ciclo acadêmico ABNT.
+
 > **Estado do projeto:** Onda 6 (Geração de Documentos) concluída.
 > Normalização textual, integração multi-LLM, humanização semântica, o motor
 > de templates ABNT, o validador de integridade acadêmica (NBR 6023:2025 e
@@ -46,28 +50,16 @@ Princípios que atravessam todas as ondas:
 
 ---
 
-## 2. Repositório de referência e licenciamento
+## 2. Créditos de referência, autoria e licenciamento
 
-A análise detalhada do repositório de referência
-[`takumar-x/AI-Humanizer`](https://github.com/takumar-x/AI-Humanizer) está em
+- **Autor do projeto:** **Renato Lemes Peixoto (`realzurr`)**
+- **Licença do projeto:** distribuído sob a **MIT License** (ver [`LICENSE`](LICENSE) e [`ADR-0014`](docs/decisions/ADR-0014-project-license.md)).
+- **Créditos ao projeto de referência:** este projeto reconhece e dá os devidos créditos ao repositório [`takumar-x/AI-Humanizer`](https://github.com/takumar-x/AI-Humanizer), criado por **`takumar-x` (Mikhail Medvedev)** sob licença GPL-3.0, que serviu como referência conceitual e funcional para o módulo inicial de limpeza e normalização textual (remoção de caracteres invisíveis, limpeza de Markdown, emojis e normalização Unicode).
+
+A análise técnica detalhada da referência está documentada em
 [`docs/architecture/REFERENCE_REPO_ANALYSIS.md`](docs/architecture/REFERENCE_REPO_ANALYSIS.md).
 
-**Resumo:** o repositório de referência é uma ferramenta client-side de arquivo
-único (`index.html`, 1080 linhas) sob **GPL-3.0**. Ele normaliza texto
-removendo caracteres invisíveis, emojis e pseudo-gráficos, além de limpeza de
-Markdown e normalização Unicode.
-
-**Decisão:** implementamos os requisitos funcionais **do zero** (*clean-room*),
-sem copiar código do repositório. Isso evita o contágio copyleft da GPL-3.0
-sobre o produto e mantém o projeto livre para escolha de licença própria.
-Justificativa completa em [`ADR-0001`](docs/decisions/ADR-0001-clean-room-reimplementation.md).
-
-> ⚠️ O repositório de referência **não é a fonte de verdade** para o
-> comportamento do normalizador. A versão dele possui regressões graves para
-> texto acadêmico (NFKC destruindo superíndices, setas químicas convertidas em
-> `>`, remoção de `©`/`®`/`™`, subíndices com `_` comidos pelo limpador de
-> Markdown). O catálogo completo está em
-> [`docs/architecture/REFERENCE_REPO_ANALYSIS.md`](docs/architecture/REFERENCE_REPO_ANALYSIS.md#6-regressões-identificadas).
+**Arquitetura independente (*clean-room*):** todo o código do **Humaniza Acadêmico** foi projetado e desenvolvido **do zero** por **Renato Lemes Peixoto (`realzurr`)**, sem copiar ou derivar código do repositório de referência (`index.html`). Além de preservar a independência de licenciamento sob **MIT** (ver [`ADR-0001`](docs/decisions/ADR-0001-clean-room-reimplementation.md)), a implementação própria permitiu corrigir regressões críticas para textos científicos (preservação de superíndices `10⁻⁶`, setas químicas, símbolos `©`/`®`/`™` e subíndices) e construir os motores de IR, proteção semântica multi-LLM, templates ABNT e exportação nativa DOCX/PDF.
 
 ---
 

@@ -24,7 +24,7 @@
 | [ADR-0011](decisions/ADR-0011-persistence-stack.md) | SQLAlchemy 2.0 + Alembic; SQLite em dev, PostgreSQL em prod | ✅ Aceita | 2026-10-21 | Médio |
 | [ADR-0012](decisions/ADR-0012-document-export.md) | Exportação DOCX nativa primeiro; PDF em processo isolado | ✅ Aceita | 2026-10-21 | Alto |
 | [ADR-0013](decisions/ADR-0013-human-approval-gate.md) | Bloqueio de aprovação automática em perda de dado protegido | ✅ Aceita | 2026-10-21 | Alto |
-| [ADR-0014](decisions/ADR-0014-project-license.md) | Licença do projeto (pendente de decisão do responsável) | 🟡 Proposta | 2026-10-21 | Alto |
+| [ADR-0014](decisions/ADR-0014-project-license.md) | Licença MIT, autoria (`realzurr`) e créditos à referência | ✅ Aceita | 2026-10-21 | Alto |
 | [ADR-0015](decisions/ADR-0015-abnt-sources-and-conformity.md) | Conformidade declarada por regra, com fonte e confiança | ✅ Aceita | 2026-10-21 | Alto |
 
 ---
@@ -124,12 +124,14 @@ Se a validação semântica detectar perda de entidade protegida de severidade
 `CRITICAL`, o sistema **impede** a aprovação automática e exige revisão
 humana explícita, com destaque da divergência.
 
-### ADR-0014 — Licença do projeto 🟡
+### ADR-0014 — Licença do projeto, autoria e créditos ✅
 
-O projeto **não** é GPL-3.0 (ver ADR-0001). A licença definitiva (proprietária,
-MIT, AGPL ou outra) é decisão do responsável e está **pendente**. Até a
-definição, nenhum arquivo `LICENSE` é adicionado ao repositório, e nenhuma
-distribuição pública é feita.
+O projeto é de autoria de **Renato Lemes Peixoto (`realzurr`)** e é distribuído
+sob a **MIT License** (arquivo `LICENSE` na raiz), com atribuição explícita de
+créditos conceituais ao repositório de referência
+[`takumar-x/AI-Humanizer`](https://github.com/takumar-x/AI-Humanizer) (de
+`takumar-x` / Mikhail Medvedev) pela inspiração inicial da etapa de
+normalização textual.
 
 ### ADR-0015 — Fontes ABNT e declaração de conformidade ✅
 
