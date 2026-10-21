@@ -21,6 +21,7 @@ from app.core.logging import configure_logging, get_logger
 from app.services.academic.templates import TemplateRegistry
 from app.services.providers.credentials import CredentialResolver
 from app.services.providers.registry import ProviderRegistry
+from app.services.references.doi import DOIResolver
 
 logger = get_logger(__name__)
 
@@ -62,11 +63,16 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Estado compartilhado: registro de provedores, resolvedor de credenciais
-    # e catálogo de templates acadêmicos.
+    # Estado compartilhado: registro de provedores, resolvedor de credenciais,
+    # catálogo de templates acadêmicos, configuração e resolvedor de DOI.
+    app.state.settings = settings
     app.state.provider_resolver = CredentialResolver(settings)
     app.state.provider_registry = ProviderRegistry(settings, app.state.provider_resolver)
     app.state.template_registry = TemplateRegistry(settings.templates_dir)
+    app.state.doi_resolver = DOIResolver(
+        timeout_seconds=settings.doi_lookup_timeout_seconds,
+        user_agent=settings.doi_user_agent,
+    )
 
     app.include_router(api_router, prefix=settings.api_prefix)
 

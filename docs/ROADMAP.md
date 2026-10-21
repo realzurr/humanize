@@ -15,7 +15,7 @@
 | 2 | Integração Multi-LLM | 1 | `LLMProvider` + 5 adaptadores + resiliência | ✅ concluída |
 | 3 | Humanização Semântica | 2 | Motor de revisão + perfis + validação | ✅ concluída |
 | 4 | Sistema de Templates ABNT | 1 | Templates versionados + gerador de estrutura | ✅ concluída |
-| 5 | Citações, Referências e Validador | 3, 4 | NBR 6023/10520 + relatórios auditáveis | ⛔ aguardando |
+| 5 | Citações, Referências e Validador | 3, 4 | NBR 6023/10520 + relatórios auditáveis | ✅ concluída |
 | 6 | Geração de Documentos | 4, 5 | DOCX nativo + PDF + histórico | ⛔ aguardando |
 | 7 | Interface e Experiência | 1–6 | 11 páginas + editor comparativo | ⛔ aguardando |
 | 8 | Segurança, Testes e Estabilização | 7 | Auth, isolamento, E2E, docs de deploy | ⛔ aguardando |
@@ -320,7 +320,7 @@ e fontes · citações longas · notas de rodapé · referências.
 
 ---
 
-## Onda 5 — Citações, Referências e Validador ABNT
+## Onda 5 — Citações, Referências e Validador ABNT ✅
 
 **Objetivo:** construir o módulo de integridade acadêmica.
 
@@ -350,15 +350,15 @@ e fontes · citações longas · notas de rodapé · referências.
 
 ### Critérios de aceite
 
-- [ ] Relatório de validação é auditável: cada achado tem **localização**,
+- [x] Relatório de validação é auditável: cada achado tem **localização**,
       **severidade**, **categoria** e **ação sugerida**.
-- [ ] Citação correta é preservada; a associação citação↔referência é
+- [x] Citação correta é preservada; a associação citação↔referência é
       reportada com confiança.
-- [ ] Importação de BibTeX e CSL-JSON funciona e valida campos.
-- [ ] Metadados de DOI só são aplicados após aprovação explícita.
-- [ ] `ruff check`, `ruff format --check`, `mypy`, `pytest` verdes;
+- [x] Importação de BibTeX e CSL-JSON funciona e valida campos.
+- [x] Metadados de DOI só são aplicados após aprovação explícita.
+- [x] `ruff check`, `ruff format --check`, `mypy`, `pytest` verdes;
       cobertura ≥ 80% em `app/services/references/`.
-- [ ] Relatório da onda em `docs/waves/onda-5.md`.
+- [x] Relatório da onda em `docs/waves/onda-5.md`.
 
 ---
 

@@ -545,6 +545,34 @@ A implementação da Onda 4 vive em `app/services/academic/`:
 * `sections.py` — classificação pré/textual/pós-textual;
 * `metadata.py` — validação de campos obrigatórios por natureza de documento.
 
+### 7.5 Integridade acadêmica e referências (`app/services/references/`)
+
+A implementação da Onda 5 vive em `app/services/references/`:
+
+* `models.py` — modelos imutáveis (`Author`, `Reference`, `Citation`, `Match`,
+  `ReferenceType`, `CitationKind`, `MatchConfidence`), com verificação de campos
+  obrigatórios por tipo de obra sem invenção de metadados;
+* `parser.py` — localização da seção de referências e extração de entradas
+  bibliográficas com registro de `source_range`;
+* `citation_parser.py` — detecção de citações autor-data (parentéticas e
+  narrativas, conforme NBR 10520:2023 — sobrenomes em minúsculas com inicial
+  maiúscula dentro e fora dos parênteses), numéricas e diretas longas;
+* `matcher.py` — associação determinística citação ↔ referência com grau de
+  confiança (`HIGH`, `MEDIUM`, `LOW`, `NONE`) e listagem de referências não
+  citadas;
+* `nbr6023.py` — formatação conforme ABNT NBR 6023:2025 (3ª ed.), sem inventar
+  campos ausentes;
+* `bibtex.py` e `csl_json.py` — importadores determinísticos de entradas
+  BibTeX e CSL-JSON;
+* `doi.py` — identificação de DOIs no texto e `DOIResolver` (consulta opt-in
+  ao Crossref restrita à allowlist de hosts), que devolve `ProposedChange`
+  para aprovação humana — nunca aplica alterações automaticamente;
+* `validator.py` — orquestrador de validação acadêmica que produz
+  `ValidationReport` com achados auditáveis (`Finding` contendo localização,
+  severidade, categoria, veredito — *erro comprovado*, *possível
+  inconsistência*, *informação não verificável* ou *recomendação
+  institucional* — e ação sugerida).
+
 ---
 
 ## 8. Persistência
