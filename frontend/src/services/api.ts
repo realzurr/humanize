@@ -6,7 +6,12 @@
  * backend; o frontend nunca recebe o valor da chave de volta.
  */
 
-import type { RespostaSaude } from '@/types';
+import type {
+  PerfilNormalizacao,
+  RelatorioNormalizacao,
+  RequisicaoNormalizacao,
+  RespostaSaude,
+} from '@/types';
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api/v1';
 
@@ -49,4 +54,12 @@ async function requisicao<T>(caminho: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   health: () => requisicao<RespostaSaude>('/health'),
+
+  normalize: (corpo: RequisicaoNormalizacao) =>
+    requisicao<RelatorioNormalizacao>('/normalize', {
+      method: 'POST',
+      body: JSON.stringify(corpo),
+    }),
+
+  normalizePerfis: () => requisicao<PerfilNormalizacao[]>('/normalize/perfis'),
 };

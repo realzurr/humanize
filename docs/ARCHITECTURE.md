@@ -360,6 +360,50 @@ Toda regra é isolada, testável, ligável/desligável e medível. O motor
 compõe as regras em pipeline determinístico e acumula as ocorrências em um
 `NormalizationReport`.
 
+### 5.2.1 Mapa de regras (`app/services/normalizer/rules/`)
+
+O catálogo tem 29 regras, aplicadas em ordem fixa (`PIPELINE_ORDER`).
+Cada regra declara `touches_protected_content` e `protected_kinds` — o motor
+isola os trechos protegidos antes de aplicar a regra, de modo que nenhuma
+transformação alcança números, fórmulas, citações, DOIs, URLs, tabelas ou
+código.
+
+| `rule_id` | Grupo | Padrão | Risco |
+|---|---|---:|---|
+| `norm.unicode.linebreak` | unicode | ligada | baixo |
+| `norm.invisible.zwsp` | invisíveis | ligada | baixo |
+| `norm.invisible.bidi` | invisíveis | ligada | médio (inverte exibição) |
+| `norm.invisible.soft_hyphen` | invisíveis | ligada | baixo |
+| `norm.invisible.variation` | invisíveis | ligada | baixo |
+| `norm.control.strip` | invisíveis | ligada | baixo |
+| `norm.ansi.strip` | invisíveis | ligada | baixo |
+| `norm.unicode.nfkc` | unicode | **desligada** | **alto** (destrói `10⁻⁶`, `x²`) |
+| `norm.unicode.nfc` | unicode | ligada | baixo |
+| `norm.html.entities` | html | ligada | médio |
+| `norm.pseudographics` | símbolos | ligada | médio (preserva setas e tabelas) |
+| `norm.dash.normalize` | símbolos | ligada | alto (preserva U+2212) |
+| `norm.quotes.ascii` | símbolos | ligada | médio (preserva citação literal) |
+| `norm.ellipsis.ascii` | símbolos | ligada | baixo |
+| `norm.bullet.normalize` | símbolos | ligada | baixo |
+| `norm.markdown.divider` | markdown | ligada | baixo |
+| `norm.markdown.heading` | markdown | ligada | baixo |
+| `norm.markdown.heading_empty` | markdown | ligada | baixo |
+| `norm.markdown.quote` | markdown | ligada | médio |
+| `norm.markdown.bullet` | markdown | ligada | baixo |
+| `norm.markdown.emphasis` | markdown | ligada | **alto** (protege subscritos) |
+| `norm.markdown.code` | markdown | ligada | médio |
+| `norm.markdown.escape` | markdown | ligada | baixo |
+| `norm.emoji.remove` | emoji | ligada | alto (preserva `©`, `®`, `™`) |
+| `norm.whitespace.nbsp` | espaços | ligada | baixo |
+| `norm.punctuation.space_before` | espaços | ligada | baixo |
+| `norm.whitespace.collapse` | espaços | ligada | baixo |
+| `norm.whitespace.trailing` | espaços | ligada | baixo |
+| `norm.whitespace.blank_lines` | espaços | ligada | baixo |
+
+A ordem do pipeline importa: quebras de linha e invisíveis primeiro, NFKC
+antes da limpeza de Markdown (para expor formas compostas), e os espaços por
+último.
+
 ### 5.3 Padrão de revisão
 
 ```python

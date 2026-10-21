@@ -6,6 +6,8 @@
  */
 import { NavLink, Route, Routes } from 'react-router-dom';
 
+import { Normalizacao } from '@/pages/Normalizacao';
+
 const PAGINAS_PREVISTAS = [
   { caminho: '/', rotulo: 'Dashboard' },
   { caminho: '/editor', rotulo: 'Editor' },
@@ -26,8 +28,8 @@ export function App() {
       <header className="border-b border-surface-border bg-surface px-4 py-3">
         <h1 className="text-lg font-semibold">Humaniza Acadêmico</h1>
         <p className="text-sm text-gray-600">
-          Onda 0 concluida: arquitetura, contratos e ferramentas. As telas
-          funcionais chegam na Onda 7.
+          Onda 0 concluída: arquitetura, contratos e ferramentas. A normalização
+          textual (Onda 1) está disponível em “Normalização”.
         </p>
       </header>
 
@@ -55,6 +57,7 @@ export function App() {
         <main className="flex-1 p-6">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/normalizacao" element={<Normalizacao />} />
             <Route path="*" element={<EmConstrucao />} />
           </Routes>
         </main>
@@ -89,7 +92,7 @@ function EmConstrucao() {
         Em construção
       </h2>
       <p className="mt-2 text-sm text-gray-700">
-        Esta tela sera implementada em ondas posteriores. Consulte
+        Esta tela será implementada em ondas posteriores. Consulte
         <code className="mx-1 rounded bg-surface-muted px-1">docs/ROADMAP.md</code>
         para o escopo previsto.
       </p>

@@ -3,10 +3,11 @@
 Plataforma web modular para **normalização textual**, **humanização semântica** e
 **formatação acadêmica ABNT** de documentos acadêmicos em português brasileiro.
 
-> **Estado do projeto:** Onda 0 (Análise e Preparação) concluída.
-> Apenas arquitetura, contratos e ferramentas estão implementados. Nenhuma
-> funcionalidade de usuário (normalização, humanização, exportação) está
-> ativa ainda — ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
+> **Estado do projeto:** Onda 1 (Normalização Textual) concluída.
+> A normalização textual determinística (sem LLM) está ativa, com API
+> (`POST /api/v1/normalize`) e tela de normalização. As ondas seguintes
+> (humanização, templates, exportação) ainda não foram implementadas — ver
+> [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 
@@ -176,7 +177,7 @@ cp .env.example .env
 | Onda | Escopo | Estado |
 |---|---|---|
 | 0 | Análise e preparação | ✅ concluída |
-| 1 | Normalização textual (sem LLM) | ⛔ aguardando autorização |
+| 1 | Normalização textual (sem LLM) | ✅ concluída |
 | 2 | Integração multi-LLM | ⛔ aguardando |
 | 3 | Humanização semântica | ⛔ aguardando |
 | 4 | Sistema de templates ABNT | ⛔ aguardando |
@@ -201,6 +202,7 @@ Detalhamento, dependências e critérios de aceite em
 | [`docs/standards/ABNT_NORMS_RESEARCH.md`](docs/standards/ABNT_NORMS_RESEARCH.md) | Normas ABNT verificadas, fontes e datas de consulta |
 | [`docs/architecture/RISK_REGISTER.md`](docs/architecture/RISK_REGISTER.md) | Registro de riscos técnicos |
 | [`docs/waves/onda-0.md`](docs/waves/onda-0.md) | Relatório da Onda 0 (análise e preparação) |
+| [`docs/waves/onda-1.md`](docs/waves/onda-1.md) | Relatório da Onda 1 (normalização textual) |
 | [`AGENTS.md`](AGENTS.md) | Regras permanentes de desenvolvimento (binding) |
 
 ---

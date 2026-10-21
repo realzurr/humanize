@@ -72,6 +72,9 @@ class ProtectedKind(StrEnum):
     CODE = "code"
     """Trechos de código-fonte."""
 
+    TABLE = "table"
+    """Tabela estruturada (ASCII, Unicode ou Markdown), preservada como bloco."""
+
     QUOTE_LITERAL = "quote_literal"
     """Citação literal entre aspas, que deve ser preservada verbatim."""
 
@@ -107,6 +110,7 @@ _DEFAULT_LEVELS: dict[ProtectedKind, ProtectionLevel] = {
     ProtectedKind.TABLE_ID: ProtectionLevel.HIGH,
     ProtectedKind.FIGURE_ID: ProtectionLevel.HIGH,
     ProtectedKind.CODE: ProtectionLevel.CRITICAL,
+    ProtectedKind.TABLE: ProtectionLevel.CRITICAL,
     ProtectedKind.QUOTE_LITERAL: ProtectionLevel.CRITICAL,
     ProtectedKind.UNIT: ProtectionLevel.HIGH,
     ProtectedKind.SPECIMEN: ProtectionLevel.HIGH,

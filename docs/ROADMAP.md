@@ -11,7 +11,7 @@
 | Onda | Nome | Depende de | Entrega principal | Estado |
 |---|---|---|---|---|
 | 0 | Análise e Preparação | — | Arquitetura, IR, tooling, documentação | ✅ concluída |
-| 1 | Normalização Textual | 0 | Motor de limpeza sem LLM + API + UI mínima | ⛔ aguardando |
+| 1 | Normalização Textual | 0 | Motor de limpeza sem LLM + API + UI mínima | ✅ concluída |
 | 2 | Integração Multi-LLM | 1 | `LLMProvider` + 4 adaptadores + resiliência | ⛔ aguardando |
 | 3 | Humanização Semântica | 2 | Motor de revisão + perfis + validação | ⛔ aguardando |
 | 4 | Sistema de Templates ABNT | 1 | Templates versionados + gerador de estrutura | ⛔ aguardando |
@@ -65,7 +65,7 @@ nenhuma das duas altere `app/ir/` sem coordenação.
 
 ---
 
-## Onda 1 — Normalização Textual
+## Onda 1 — Normalização Textual ✅
 
 **Objetivo:** implementar o primeiro motor do sistema, sem utilizar LLM.
 
@@ -129,22 +129,22 @@ O motor **não pode** remover nem alterar automaticamente:
 
 ### Critérios de aceite
 
-- [ ] Cada regra tem teste unitário próprio, incluindo o caso "não faz nada"
+- [x] Cada regra tem teste unitário próprio, incluindo o caso "não faz nada"
       quando desabilitada.
-- [ ] Existe uma suíte de regressão documental (`tests/fixtures/`) com textos
+- [x] Existe uma suíte de regressão documental (`tests/fixtures/`) com textos
       acadêmicos reais anonimizados, contendo: fórmulas, unidades, tabelas,
       bloco de código, citação literal, DOI, referência, superíndices,
       subscritos e alfabeto grego.
-- [ ] O teste de regressão verifica explicitamente que trechos protegidos
+- [x] O teste de regressão verifica explicitamente que trechos protegidos
       (números, fórmulas, superíndices, DOI, citações) permanecem intactos —
       a proteção é testada, não apenas a ausência de erro.
-- [ ] `POST /api/v1/normalize` devolve texto, relatório por regra e as
+- [x] `POST /api/v1/normalize` devolve texto, relatório por regra e as
       entidades protegidas detectadas.
-- [ ] Exportação TXT e Markdown funcionam no frontend.
-- [ ] Nenhum teste exige chave de API nem chamada de rede.
-- [ ] `ruff check`, `ruff format --check`, `mypy`, `pytest` verdes;
+- [x] Exportação TXT e Markdown funcionam no frontend.
+- [x] Nenhum teste exige chave de API nem chamada de rede.
+- [x] `ruff check`, `ruff format --check`, `mypy`, `pytest` verdes;
       cobertura ≥ 80% em `app/services/normalizer/`.
-- [ ] Documentação atualizada: `docs/ARCHITECTURE.md` (mapa de regras),
+- [x] Documentação atualizada: `docs/ARCHITECTURE.md` (mapa de regras),
       `docs/ROADMAP.md` (estado) e `docs/waves/onda-1.md`.
 
 ---

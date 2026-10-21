@@ -1,0 +1,113 @@
+# MODELO DE AVALIAÇÃO NUTRICIONAL EM SOLO ÁCIDO
+
+## RESUMO
+
+Este estudo avaliou o efeito de amendantes orgânicos na produtividade de
+milho (*Zea mays*) em solo com reação ácida (pH 5,4 ± 0,3). O crescimento foi maior nas parcelas com composto orgânico, com incremento
+de 18,7 % na massa seca da parte aérea. Os resultados indicam que a
+correção da acidez é pré-requisito para a expressão do potencial
+produtivo em solos tropicais degradados.
+
+**Palavras-chave:** solo ácido. Amendante orgânico. Milho. Produtividade.
+
+## 1 INTRODUÇÃO
+
+A produtividade agrícola em solos tropicais é limitada, entre outros fatores,
+pela acidez e pela baixa disponibilidade de nutrientes (FREITAS; FERNANDES,
+2019). A aplicação de calcário é a prática mais comum, mas exige transporte
+e custo elevado para pequenos produtores.
+
+A Tabela 1 apresenta as características químicas do solo antes do
+experimento.
+
+| Variável             | Valor inicial | Valor final | Unidade   |
+|----------------------|---------------|-------------|-----------|
+| pH em água           | 5,4           | 6,1         | —         |
+| Matéria orgânica     | 1,8           | 2,4         | g·dm⁻³    |
+| Fósforo total        | 3,2           | 5,7         | mg·dm⁻³   |
+| Capacidade de troca  | 4,5           | 6,9         | cmol(+)·dm⁻³ |
+
+O tratamento com composto orgânico reduziu em 22,4 % a concentração de
+alumínio trocável, conforme SILVA (2020). Esse autor sustenta que “a
+acidificação do solo é a principal causa da redução da produtividade em
+regiões tropicais” (SILVA, 2020, p. 45), posição corroborada por PEREIRA
+et al. (2018).
+
+A hipótese testada é que a adição de material orgânico, isoladamente,
+promove o crescimento da cultura por meio da complexação do alumínio
+trocável. O modelo matemático adotado foi:
+
+E = m·a
+
+onde *E* é a energia acumulada, *m* a massa e *a* o calor específico. A
+eficiência do processo (η) foi estimada segundo a equação 2:
+
+η = (Ea − Econsumida) / Ea × 100
+
+Os coeficientes foram obtidos em literatura (LEE et al., 2016) e ajustados
+com os dados de campo. A massa de carbono total (C) correlacionou-se com o
+pH (r = 0,78; p < 0,05; n = 24), e a regressão quadrática ajusta o modelo.
+
+O procedimento de análise seguiu o protocolo descrito no código abaixo:
+
+```python
+def calc_yield(dry_mass_g: float, area_m2: float) -> float:
+    """Produtividade em g·m⁻²."""
+    return dry_mass_g / area_m2
+```
+
+Os dados foram depositados no repositório Zenodo, disponíveis em
+https://doi.org/10.5281/zenodo.10428739. A consulta ao Crossref foi feita
+em 12/03/2025.
+
+## 2 RESULTADOS
+
+A aplicação do composto orgânico aumentou a produtividade em 18,7 %
+(p = 0,003; n = 24), conforme ilustrado na Tabela 2.
+
+| Tratamento              | Produtividade (g·m⁻²) | Δ (%)   |
+|-------------------------|------------------------|---------|
+| Testemunha              | 12,4 ± 1,1             | —       |
+| Composto orgânico       | 14,7 ± 0,9             | +18,7   |
+| Calcário (controle)     | 15,1 ± 1,3             | +21,8   |
+
+A diferença entre o tratamento com composto e a testemunha não foi
+significativa (p = 0,11), ao passo que o calcário superou ambos. A
+concentração de Ca²⁺ e Mg²⁺ no solo także aumentou, o que explica o
+desempenho superior do calcário. A Tabela 3 detalha os dados denutrição.
+
+Os valores de pH variaram entre 5,1 e 6,4 ao longo do experimento. A análise
+de variância (ANOVA) não detectou interação significativa entre os fatores
+(p = 0,34).
+
+## 3 DISCUSSÃO
+
+Os resultados corroboram a hipótese de que a complexação do alumínio
+trocável é o mecanismo predominante. A relação entre o pH e a produtividade
+seguiu um modelo quadrático ajustado pela equação, com ponto de inflexão em pH 6,0.
+
+Ressalva-se que o experimento foi conduzido em uma única área, o que limita
+a generalização dos achados. A literatura registra resultados divergentes
+(ANDERSON et al., 2017; SOUSA, 2019).
+
+## REFERÊNCIAS
+
+ANDERSON, J. et al. Organic amendments and soil acidity in tropical
+agroecosystems. Journal of Soil Science. London: Wiley, 2017. DOI:
+10.1111/jss.12845. Disponível em: https://doi.org/10.1111/jss.12845.
+
+FREITAS, L. C.; FERNANDES, M. A. Nutrient management in weathered soils.
+Revista Brasileira de Ciência do Solo. São Paulo: SBC, 2019. DOI:
+10.1590/0102-311x00133115.
+
+LEE, S. et al. Energy conversion efficiency in crop systems. Energy and
+Fuels. Hoboken: Wiley, 2016. DOI: 10.1002/ef.2201.
+
+PEREIRA, D. F. et al. Long-term soil amendment effects. European Journal of
+Soil Science. Hoboken: Wiley, 2018. DOI: 10.1111/ejss.12677.
+
+SILVA, R. A. Acidification and crop productivity in the tropics. São Paulo:
+Editora Agronômica, 2020.
+
+SOUSA, M. B. Response of maize to organic amendments. Pesquisa Agropecuária
+Brasileira. Brasília: EMBRAPA, 2019. DOI: 10.1590/0102-204x2019.5501.
