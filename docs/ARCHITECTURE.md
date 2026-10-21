@@ -342,6 +342,14 @@ Invariantes:
 `ProviderError.to_public_dict()` é a única forma de expor erro ao cliente —
 garante que nenhum detalhe sensível vaze.
 
+A Onda 2 implementa o contrato com HTTP direto via `httpx` (ver adendo do
+`ADR-0004`), em cinco adaptadores (`openai_provider.py`,
+`anthropic_provider.py`, `gemini_provider.py`, `ollama_provider.py`,
+`openai_compat.py`) resolvidos pelo `registry.py`. A resiliência fica em
+`resilience.py` (timeout, retry com backoff exponencial + jitter, respeito a
+`Retry-After`), a estimativa de tokens/custo em `usage.py` e a resolução de
+chaves em `credentials.py` (AES-GCM; a API expõe apenas `configured`/`last4`).
+
 ### 5.2 `NormalizationRule` (`app/services/normalizer/rules/base.py`)
 
 ```python

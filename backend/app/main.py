@@ -18,6 +18,8 @@ from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.errors import HumanizaError
 from app.core.logging import configure_logging, get_logger
+from app.services.providers.credentials import CredentialResolver
+from app.services.providers.registry import ProviderRegistry
 
 logger = get_logger(__name__)
 
@@ -58,6 +60,10 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Estado compartilhado: registro de provedores e resolvedor de credenciais.
+    app.state.provider_resolver = CredentialResolver(settings)
+    app.state.provider_registry = ProviderRegistry(settings, app.state.provider_resolver)
 
     app.include_router(api_router, prefix=settings.api_prefix)
 

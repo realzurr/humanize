@@ -12,7 +12,7 @@
 |---|---|---|---|---|
 | 0 | Análise e Preparação | — | Arquitetura, IR, tooling, documentação | ✅ concluída |
 | 1 | Normalização Textual | 0 | Motor de limpeza sem LLM + API + UI mínima | ✅ concluída |
-| 2 | Integração Multi-LLM | 1 | `LLMProvider` + 4 adaptadores + resiliência | ⛔ aguardando |
+| 2 | Integração Multi-LLM | 1 | `LLMProvider` + 5 adaptadores + resiliência | ✅ concluída |
 | 3 | Humanização Semântica | 2 | Motor de revisão + perfis + validação | ⛔ aguardando |
 | 4 | Sistema de Templates ABNT | 1 | Templates versionados + gerador de estrutura | ⛔ aguardando |
 | 5 | Citações, Referências e Validador | 3, 4 | NBR 6023/10520 + relatórios auditáveis | ⛔ aguardando |
@@ -149,7 +149,7 @@ O motor **não pode** remover nem alterar automaticamente:
 
 ---
 
-## Onda 2 — Integração Multi-LLM
+## Onda 2 — Integração Multi-LLM ✅
 
 **Objetivo:** adicionar provedores de linguagem por uma interface comum.
 
@@ -179,19 +179,20 @@ O motor **não pode** remover nem alterar automaticamente:
 
 ### Critérios de aceite
 
-- [ ] Uma mesma requisição (mesmo `LLMRequest`) roda com sucesso em **dois
-      provedores distintos** (OpenAI + Ollama, por exemplo) com contrato
-      idêntico de entrada e saída.
-- [ ] Timeout, retry com backoff, rate limit e resposta inválida têm teste
+- [x] Uma mesma requisição (mesmo `LLMRequest`) roda com sucesso em **dois
+      provedores distintos** (OpenAI + Ollama) com contrato idêntico de
+      entrada e saída.
+- [x] Timeout, retry com backoff, rate limit e resposta inválida têm teste
       com *fake provider* (sem rede).
-- [ ] Teste garante que a chave **não** aparece em log, exceção nem resposta
+- [x] Teste garante que a chave **não** aparece em log, exceção nem resposta
       JSON.
-- [ ] A API informa quando o modelo selecionado não está disponível.
-- [ ] Estimativa de tokens e custo exposta na resposta.
-- [ ] Cancelamento de requisição funciona onde o provedor suporta.
-- [ ] `ruff check`, `ruff format --check`, `mypy`, `pytest` verdes;
+- [x] A API informa quando o modelo selecionado não está disponível
+      (`MODEL_NOT_FOUND`).
+- [x] Estimativa de tokens e custo exposta na resposta.
+- [x] Cancelamento de requisição funciona onde o provedor suporta.
+- [x] `ruff check`, `ruff format --check`, `mypy`, `pytest` verdes;
       cobertura ≥ 80% em `app/services/providers/`.
-- [ ] Relatório da onda em `docs/waves/onda-2.md`.
+- [x] Relatório da onda em `docs/waves/onda-2.md`.
 
 ---
 

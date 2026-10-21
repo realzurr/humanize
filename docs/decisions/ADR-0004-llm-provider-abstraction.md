@@ -46,14 +46,34 @@ class LLMProvider(abc.ABC):
    cliente.
 5. Custos são **estimados**, nunca cobrados.
 
+### Adendo (Onda 2) — transporte via `httpx` em vez de SDKs oficiais
+
+O texto original previa "SDK oficial" para cada adaptador. A implementação
+da Onda 2 optou por **HTTP direto via `httpx`** (já presente no manifesto de
+dependências, junto com `tenacity` e `cryptography`), pelas razões:
+
+- evita três dependências pesadas (`openai`, `anthropic`,
+  `google-generativeai`), reduzindo a superfície de fornecimento;
+- permite testes determinísticos com `httpx.MockTransport` (sem rede, sem
+  custo e sem mocks de SDK);
+- centraliza a normalização de erro em `resilience.py` (o SDK não normaliza
+  `429`/`Retry-After`/`529` de forma uniforme);
+- o contrato neutro (`LLMRequest`/`LLMResponse`) já isola o sistema dos
+  detalhes de cada fornecedor.
+
+O trade-off (perda de recursos específicos como `seed` e cache de prompt) já
+era listado como negativo da própria decisão original e permanece coberto por
+`LLMRequest.metadata`. A tabela "Adaptadores" acima mantém a nomenclatura dos
+arquivos, trocando "SDK oficial" por "HTTP direto".
+
 ### Adaptadores
 
 | Adaptador | Observação |
 |---|---|
-| `openai_provider.py` | SDK oficial; base do `openai_compat.py` |
-| `anthropic_provider.py` | SDK oficial; `max_tokens` obrigatório |
-| `gemini_provider.py` | SDK oficial; `safetySettings` |
-| `ollama_provider.py` | Sem chave; modelos locais |
+| `openai_provider.py` | HTTP direto (`/chat/completions`); base do `openai_compat.py` |
+| `anthropic_provider.py` | HTTP direto; `max_tokens` obrigatório |
+| `gemini_provider.py` | HTTP direto; `systemInstruction` + `generationConfig` |
+| `ollama_provider.py` | Sem chave; modelos locais (`/api/chat`) |
 | `openai_compat.py` | Endpoint configurável + lista de modelos declarada |
 
 `resilience.py` centraliza timeout, retry com backoff exponencial e jitter,
