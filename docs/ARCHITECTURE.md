@@ -415,13 +415,23 @@ antes da limpeza de Markdown (para expor formas compostas), e os espaços por
 ### 5.3 Padrão de revisão
 
 ```python
-def humanize(text: str, *, provider, model, profile, intensity) -> ReviewResult
+class HumanizerService:
+    def __init__(self, provider: LLMProvider) -> None: ...
+
+    async def humanize(
+        self, text: str, *, profile: AuthorialProfile, intensity: Intensity, model: str
+    ) -> ReviewResult: ...
 ```
 
-`ReviewResult` carrega: texto revisado, relatório de validação semântica,
-diff por trecho e as entidades protegidas (antes e depois). O caller decide
-o que fazer com os achados — a camada de humanização **não** aprova nada
-sozinha.
+`ReviewResult` carrega: texto revisado (com as entidades protegidas
+restauradas ao original), análise, traços de estilo, o relatório de validação
+semântica (`ValidationReport`) e o consumo estimado. O caller decide o que
+fazer com os achados — a camada de humanização **não** aprova nada sozinha.
+
+O ciclo é: extrair e **mascarar** as entidades protegidas (`⟦P0001⟧`), chamar
+o provedor, **restaurar** os valores originais e **validar** os catálogos
+antes/depois (`app/services/semantic_validator/`), implementando o portão de
+aprovação do `ADR-0013`.
 
 ---
 

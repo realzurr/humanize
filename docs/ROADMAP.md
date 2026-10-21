@@ -13,7 +13,7 @@
 | 0 | Análise e Preparação | — | Arquitetura, IR, tooling, documentação | ✅ concluída |
 | 1 | Normalização Textual | 0 | Motor de limpeza sem LLM + API + UI mínima | ✅ concluída |
 | 2 | Integração Multi-LLM | 1 | `LLMProvider` + 5 adaptadores + resiliência | ✅ concluída |
-| 3 | Humanização Semântica | 2 | Motor de revisão + perfis + validação | ⛔ aguardando |
+| 3 | Humanização Semântica | 2 | Motor de revisão + perfis + validação | ✅ concluída |
 | 4 | Sistema de Templates ABNT | 1 | Templates versionados + gerador de estrutura | ⛔ aguardando |
 | 5 | Citações, Referências e Validador | 3, 4 | NBR 6023/10520 + relatórios auditáveis | ⛔ aguardando |
 | 6 | Geração de Documentos | 4, 5 | DOCX nativo + PDF + histórico | ⛔ aguardando |
@@ -196,7 +196,7 @@ O motor **não pode** remover nem alterar automaticamente:
 
 ---
 
-## Onda 3 — Humanização Semântica
+## Onda 3 — Humanização Semântica ✅
 
 **Objetivo:** transformar textos em escrita mais natural, clara e autoral,
 preservando significado e informações verificáveis.
@@ -231,22 +231,22 @@ preservando significado e informações verificáveis.
 
 ### Critérios de aceite
 
-- [ ] As 7 perfis produzem sações visivelmente distintas sobre o mesmo texto.
-- [ ] A intensidade 0 não altera nada; 100 reescreve profundamente **sem**
+- [x] As 7 perfis produzem sações visivelmente distintas sobre o mesmo texto.
+- [x] A intensidade 0 não altera nada; 100 reescreve profundamente **sem**
       alterar entidades protegidas.
-- [ ] Teste garante que números, datas, DOI e citações literais sobrevêm
+- [x] Teste garante que números, datas, DOI e citações literais sobrevêm
       intactos ao ciclo completo.
-- [ ] Teste garante que uma resposta de LLM que **omite** um número
+- [x] Teste garante que uma resposta de LLM que **omite** um número
       sinalizado gera alerta de severidade `critical`.
-- [ ] Teste garante que uma resposta que **altera** um número sinalizado
+- [x] Teste garante que uma resposta que **altera** um número sinalizado
       gera alerta e reverte/registra a mudança.
-- [ ] Perfis autorais são construídos **apenas** com textos do próprio
+- [x] Perfis autorais são construídos **apenas** com textos do próprio
       usuário (verificação por `owner_id`).
-- [ ] Testes usam *fake provider*; nenhuma chamada paga é feita.
-- [ ] `ruff check`, `ruff format --check`, `mypy`, `pytest` verdes;
+- [x] Testes usam *fake provider*; nenhuma chamada paga é feita.
+- [x] `ruff check`, `ruff format --check`, `mypy`, `pytest` verdes;
       cobertura ≥ 80% em `app/services/humanizer/` e
       `app/services/semantic_validator/`.
-- [ ] Relatório da onda em `docs/waves/onda-3.md`.
+- [x] Relatório da onda em `docs/waves/onda-3.md`.
 
 ---
 

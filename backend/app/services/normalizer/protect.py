@@ -70,11 +70,12 @@ _PRIORIDADE: dict[ProtectedKind, int] = {
     ProtectedKind.REFERENCE: 6,
     ProtectedKind.FORMULA: 7,
     ProtectedKind.STATISTIC: 8,
-    ProtectedKind.NUMBER: 9,
-    ProtectedKind.UNIT: 10,
-    ProtectedKind.DATE: 11,
-    ProtectedKind.TABLE_ID: 12,
-    ProtectedKind.FIGURE_ID: 13,
+    ProtectedKind.TERM_DEFINED: 9,
+    ProtectedKind.NUMBER: 10,
+    ProtectedKind.UNIT: 11,
+    ProtectedKind.DATE: 12,
+    ProtectedKind.TABLE_ID: 13,
+    ProtectedKind.FIGURE_ID: 14,
 }
 
 
@@ -121,6 +122,8 @@ _SURNAME_RE = re.compile(r"[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][\wÀ-ÿ'’-]+")
 _SUBSCRIPT_RE = re.compile(r"(?<=[A-Za-zÀ-ÿ])\s+_[A-Za-z0-9]")
 _TABLE_ID_RE = re.compile(r"(?<![\w])(?:Tabela|Quadro|Figure|Table)\s+\d+(?:\.\d+)?(?![\w])")
 _FIGURE_ID_RE = re.compile(r"(?<![\w])(?:Figura|Fig\.?|Gráfico|Image)\s+\d+(?:\.\d+)?(?![\w])")
+#: Sigla seguida de definição entre parênteses (ex.: ``TDAH (Transtorno...)``).
+_ACRONYM_RE = re.compile(r"(?<![\w])([A-ZÀ-Ü]{2,6})\s*\(([^()]{3,160})\)")
 _REFERENCES_HEADING_RE = re.compile(
     r"^\s*(?:#{1,6}\s*)?(?:refer[eê]ncias|refer[eê]ncias bibliogr[aá]ficas|bibliografia)\s*:?\s*$",
     re.IGNORECASE | re.MULTILINE,
@@ -299,7 +302,26 @@ def detect_protected_spans(texto: str) -> list[ProtectedSpan]:
         if tem_ano and tem_sobrenome:
             candidatos.append(ProtectedSpan(match.start(), match.end(), ProtectedKind.CITATION))
 
+    for inicio, fim in _termos_definidos(texto):
+        candidatos.append(ProtectedSpan(inicio, fim, ProtectedKind.TERM_DEFINED))
+
     return _resolver_sobreposicoes(candidatos)
+
+
+def _termos_definidos(texto: str) -> Iterator[tuple[int, int]]:
+    """Detecta siglas seguidas de definição entre parênteses.
+
+    A sigla é protegida como termo definido apenas quando o parêntese contém
+    uma definição (palavra em minúsculas), e não uma citação autor-data como
+    ``SILVA (2020)``.
+    """
+    for match in _ACRONYM_RE.finditer(texto):
+        conteudo = match.group(2)
+        if _YEAR_IN_TEXT_RE.search(conteudo):
+            continue
+        if re.search(r"[a-zà-ú]{3,}", conteudo) is None:
+            continue
+        yield match.start(1), match.end(1)
 
 
 def _resolver_sobreposicoes(candidatos: list[ProtectedSpan]) -> list[ProtectedSpan]:
