@@ -92,7 +92,7 @@ class CredentialStatus:
     """``env`` | ``session`` | ``""`` (não configurada)."""
 
 
-def _last4(chave: str) -> str:
+def last4(chave: str) -> str:
     return chave[-4:] if len(chave) >= 4 else ""
 
 
@@ -123,13 +123,13 @@ class CredentialResolver:
         env = self._env_value(provider)
         if env:
             return CredentialStatus(
-                provider=provider, configured=True, last4=_last4(env), source="env"
+                provider=provider, configured=True, last4=last4(env), source="env"
             )
         token = self._session.get(provider)
         if token is not None:
             chave = self._cipher.decrypt(token) if self._cipher.available else token
             return CredentialStatus(
-                provider=provider, configured=True, last4=_last4(chave), source="session"
+                provider=provider, configured=True, last4=last4(chave), source="session"
             )
         return CredentialStatus(provider=provider, configured=False)
 
@@ -139,7 +139,7 @@ class CredentialResolver:
         token = self._cipher.encrypt(chave) if self._cipher.available else chave
         self._session[provider] = token
         return CredentialStatus(
-            provider=provider, configured=True, last4=_last4(chave), source="session"
+            provider=provider, configured=True, last4=last4(chave), source="session"
         )
 
     def delete(self, provider_id: ProviderId | str) -> CredentialStatus:

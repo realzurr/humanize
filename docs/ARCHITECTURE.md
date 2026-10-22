@@ -600,29 +600,45 @@ A implementação da Onda 6 vive em `app/services/document_export/`:
 ## 8. Persistência
 
 SQLAlchemy 2.0 com estilo `Mapped[]`/`mapped_column`, Alembic para migrações.
-SQLite em desenvolvimento, PostgreSQL em produção.
+SQLite em desenvolvimento, PostgreSQL em produção. A camada foi implementada
+na Onda 8 (`app/core/database.py`, `app/models/`, `app/repositories/`,
+`alembic/`).
 
-Entidades previstas:
+Entidades:
 
 | Tabela | Conteúdo |
 |---|---|
-| `documents` | Documento, dono, texto original, revisão corrente |
+| `users` | Usuário (id, username único, hash de senha) |
+| `documents` | Documento, dono, texto original imutável, revisão corrente |
 | `revisions` | Histórico de revisões (append-only) |
-| `transformations` | Registro por regra e localização |
 | `provider_credentials` | Credenciais cifradas (AES-GCM), com `last4` |
-| `author_profiles` | Perfis autorais derivados de textos do próprio usuário |
-| `exports` | Metadados de exportações (caminho, hash, formato) |
-| `validation_reports` | Relatórios de conformidade e de validação semântica |
+| `exports` | Metadados de exportações (hash, formato, dono) |
 
-> `original_text` é stored separadamente e **nunca** é atualizado.
+> `original_text` é armazenado separadamente e **nunca** é atualizado. As
+> transformações por revisão são serializadas em `revisions.transformations_json`
+> (rastreabilidade por `rule_id`), sem tabela relacional adicional.
 
 ### 8.1 Segredos
 
 - Credenciais **nunca** são retornadas ao frontend. A API expõe apenas
   `configured: bool` e `last4: str`.
 - A chave de criptografia (`encryption_key`) vive **fora** do banco, em
-  variável de ambiente/segredo do ambiente de execução.
+  variável de ambiente/segredo do ambiente de execução; o ciphertext em
+  `provider_credentials` usa AES-GCM (`SecretCipher`).
 - Logs passam por `redact_secrets` (`app/core/logging.py`).
+
+### 8.2 Autenticação e autorização
+
+Autenticação **opt-in** (`Settings.auth_enabled`): registrada na Onda 8.
+
+- Senhas: PBKDF2-SHA256 (`app/core/security.py`), salt por usuário, verificação
+  em tempo constante.
+- Tokens: assinados com HMAC-SHA256 (`TokenService`), com expiração e `jti`.
+- Rotas: `POST /auth/register`, `POST /auth/token`, `GET /auth/me`.
+- `get_current_user` (`app/api/deps.py`) devolve o usuário ou `None` no modo
+  local; o `owner_id` isola documentos e credenciais por usuário.
+- Rate limiting por janela deslizante (`app/core/ratelimit.py`) em login e
+  humanização.
 
 ---
 
@@ -659,12 +675,14 @@ incluindo a verificação de ausência de segredos no navegador).
 | Vazamento de chave em log | `redact_secrets` obrigatório | 0 |
 | Chave devolvida ao cliente | API expõe só `configured`/`last4` | 2 |
 | Segredo no `localStorage` | Segredos só no backend | 2 |
-| Prompt injection via documento | Texto importado é **conteúdo**, delimitado e nunca interpretável como instrução | 2–3 |
-| Upload malicioso | Limite de tamanho, magic bytes, nome sanitizado, sem path traversal | 8 |
+| Registro de segredo em exceção | `ProviderError` não inclui credencial | 2 |
 | SSRF em consulta de DOI | Allowlist de hosts, opt-in, timeout | 5 |
 | Path traversal em template | Templates lidos de diretório allowlisted, ID validado contra schema | 4 |
+| Prompt injection via documento | Texto importado delimitado + instrução anti-instrução | 2–3, 8 |
+| Autenticação e isolamento | `owner_id` + tokens assinados + senha PBKDF2 | 8 |
+| Upload malicioso | Limite de tamanho, magic bytes, nome sanitizado, sem path traversal | 8 |
+| Força bruta / abuso de API | Rate limiting por janela deslizante | 8 |
 | Cross-tenant | `owner_id` obrigatório em toda consulta | 8 |
-| Registro de segredo em exceção | `ProviderError` não inclui credencial | 2 |
 
 ---
 

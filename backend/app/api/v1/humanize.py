@@ -8,10 +8,11 @@ estimado são devolvidos ao cliente.
 
 from __future__ import annotations
 
-from typing import cast
+from typing import Annotated, cast
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 
+from app.api.deps import make_rate_limit_dependency
 from app.core.errors import NotFoundError, ValidationError
 from app.core.logging import get_logger
 from app.schemas.humanize import (
@@ -38,12 +39,18 @@ router = APIRouter(tags=["humanização"])
 
 logger = get_logger(__name__)
 
+humanize_rate_limit = make_rate_limit_dependency("humanize")
+
 #: Limite de caracteres de cada texto autoral.
 _MAX_AUTORAL_TEXT_LENGTH = 50_000
 
 
 @router.post("/humanize", response_model=HumanizeResponse)
-async def humanize(requisicao: HumanizeRequest, request: Request) -> HumanizeResponse:
+async def humanize(
+    requisicao: HumanizeRequest,
+    request: Request,
+    _: Annotated[None, Depends(humanize_rate_limit)],
+) -> HumanizeResponse:
     """Humaniza o texto preservando números, datas, DOIs e citações."""
     perfil = _resolver_perfil(requisicao)
     intensidade = _validar_intensidade(requisicao.intensidade)

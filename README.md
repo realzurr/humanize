@@ -5,7 +5,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688.svg?logo=fastapi&logoColor=white)](backend/app/main.py)
 [![React 18 + TypeScript](https://img.shields.io/badge/Frontend-React%2018%20%2B%20TS-61DAFB.svg?logo=react&logoColor=black)](frontend/package.json)
 [![ABNT Vigente](https://img.shields.io/badge/ABNT-NBR%2014724%3A2024%20%7C%206023%3A2025%20%7C%2010520%3A2023-2ea44f.svg)](docs/standards/ABNT_NORMS_RESEARCH.md)
-[![Testes](https://img.shields.io/badge/Testes-438%20passando-brightgreen.svg)](docs/waves/onda-7.md)
+[![Testes](https://img.shields.io/badge/Testes-466%20passando-brightgreen.svg)](docs/waves/onda-8.md)
 
 Plataforma web modular para **normalização textual determinística**, **humanização semântica com proteção de dados científicos** e **formatação/validação acadêmica ABNT** em português brasileiro, com exportação nativa para **DOCX**, **PDF**, **TXT** e **Markdown**.
 
@@ -14,7 +14,7 @@ Plataforma web modular para **normalização textual determinística**, **humani
 - **Créditos de referência:** inspirado inicialmente na concepção de limpeza textual do projeto [`takumar-x/AI-Humanizer`](https://github.com/takumar-x/AI-Humanizer) (`takumar-x` / Mikhail Medvedev) — integralmente projetado e reimplementado do zero (*clean-room*) e expandido para o ciclo acadêmico completo.
 
 > [!NOTE]
-> **Estado atual do projeto:** **Onda 7 concluída** (Normalização Textual, Integração Multi-LLM, Humanização Semântica, Sistema de Templates ABNT, Validador Acadêmico NBR 6023:2025 / 10520:2023, Exportação DOCX/PDF/TXT/Markdown e a interface web com 11 páginas e editor comparativo ativos). Consulte o progresso detalhado em [`docs/ROADMAP.md`](docs/ROADMAP.md).
+> **Estado atual do projeto:** **Onda 8 concluída** — todas as oito ondas do plano foram entregues: normalização textual, integração multi-LLM, humanização semântica, templates ABNT, validação de citações/referências, exportação DOCX/PDF/TXT/Markdown, interface web com 11 páginas e editor comparativo, e segurança/estabilização (autenticação, isolamento por usuário, uploads seguros, rate limiting e persistência relacional). Consulte o progresso detalhado em [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 
@@ -94,6 +94,15 @@ flowchart TD
 | `POST` | `/api/v1/exports` | Gera e armazena exportações (`docx`, `pdf`, `txt`, `md`) com inspeção estrutural | 6 |
 | `POST` | `/api/v1/exports/preview` | Gera pré-visualização estruturada (sumário, estilos, margens e blocos) | 6 |
 | `GET` | `/api/v1/exports/{id}/download` | Faz o download do arquivo exportado (`.docx`, `.pdf`, `.txt`, `.md`) | 6 |
+| `POST` | `/api/v1/auth/register` | Registra um usuário (senha PBKDF2) | 8 |
+| `POST` | `/api/v1/auth/token` | Autentica e emite token de acesso assinado | 8 |
+| `GET` | `/api/v1/auth/me` | Devolve o usuário autenticado | 8 |
+| `POST` | `/api/v1/uploads` | Upload seguro de documento (tamanho, tipo real, nome sanitizado) | 8 |
+| `POST` | `/api/v1/documents` | Cria um documento persistido (texto original imutável, isolado por dono) | 8 |
+| `GET` | `/api/v1/documents` | Lista os documentos do usuário | 8 |
+| `GET` | `/api/v1/documents/{id}` | Consulta um documento do usuário | 8 |
+| `DELETE` | `/api/v1/documents/{id}` | Exclui um documento do usuário | 8 |
+| `POST` | `/api/v1/documents/prune` | Aplica a política de retenção sobre os documentos | 8 |
 
 ---
 
@@ -201,7 +210,7 @@ cp .env.example .env
 | **5** | Citações, Referências e Validador | NBR 10520:2023 + NBR 6023:2025 + BibTeX/CSL-JSON + DOI opt-in | ✅ Concluída | [`onda-5.md`](docs/waves/onda-5.md) |
 | **6** | Geração de Documentos | DOCX com estilos/campos nativos + PDF isolado + TXT/MD + histórico | ✅ Concluída | [`onda-6.md`](docs/waves/onda-6.md) |
 | **7** | Interface e Experiência | 11 páginas unificadas + editor comparativo lado a lado + E2E | ✅ Concluída | [`onda-7.md`](docs/waves/onda-7.md) |
-| **8** | Segurança, Testes e Estabilização | Autenticação, isolamento multiusuário, retenção e guia de deploy | ⏳ Aguardando | — |
+| **8** | Segurança, Testes e Estabilização | Autenticação, isolamento multiusuário, retenção e guia de deploy | ✅ Concluída | [`onda-8.md`](docs/waves/onda-8.md) |
 
 ---
 

@@ -18,6 +18,7 @@ from app.services.humanizer.intensity import Intensity
 from app.services.humanizer.intensity import instruction as instrucao_de_intensidade
 from app.services.humanizer.profiles import AuthorialProfile
 from app.services.humanizer.style_features import StyleFeatures, extract_style_features
+from app.services.ingestion.guard import INSTRUCAO_SISTEMA, envolver_conteudo, remover_envoltorio
 from app.services.providers.base import ChatMessage, LLMProvider, LLMRequest, TokenUsage
 from app.services.semantic_validator import extract, mask, unmask, validate
 from app.services.semantic_validator.validator import ValidationReport
@@ -89,6 +90,7 @@ class HumanizerService:
         resposta = await self._provider.generate(request)
 
         revisado = unmask(resposta.text, mascarado)
+        revisado = remover_envoltorio(revisado)
         novo_catalog = extract(revisado)
         validacao = validate(catalog, novo_catalog)
 
@@ -121,7 +123,7 @@ class HumanizerService:
         return LLMRequest(
             messages=(
                 ChatMessage(role="system", content=sistema),
-                ChatMessage(role="user", content=text),
+                ChatMessage(role="user", content=envolver_conteudo(text)),
             ),
             model=model,
             temperature=0.7,
@@ -131,6 +133,7 @@ class HumanizerService:
         partes = [
             profile.system_instruction,
             instrucao_de_intensidade(intensity),
+            INSTRUCAO_SISTEMA,
             (
                 "O texto enviado contém marcadores entre ⟦ ⟧ (ex.: ⟦P0001⟧) que "
                 "representam valores protegidos. Reproduza esses marcadores "

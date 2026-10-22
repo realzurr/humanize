@@ -92,6 +92,18 @@ class Settings(BaseSettings):
     credential_encryption_enabled: bool = False
     """Habilita a criptografia de credenciais persistidas (Onda 8)."""
 
+    auth_enabled: bool = False
+    """Habilita autenticação e isolamento por usuário (obrigatório em produção)."""
+
+    access_token_ttl_seconds: int = 3600
+    """Tempo de vida do token de acesso (segundos)."""
+
+    rate_limit_login_per_minute: int = 10
+    """Limite de tentativas de login por minuto (por IP)."""
+
+    rate_limit_humanize_per_minute: int = 30
+    """Limite de requisições de humanização por minuto (por IP)."""
+
     document_retention_days: int = 30
     """Prazo de retenção de documentos (dias)."""
 

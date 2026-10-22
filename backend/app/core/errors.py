@@ -64,3 +64,31 @@ class ExportError(HumanizaError):
 
     code = "export_error"
     status_code = 500
+
+
+class UnauthorizedError(HumanizaError):
+    """Credencial de acesso ausente, inválida ou expirada."""
+
+    code = "unauthorized"
+    status_code = 401
+
+
+class ForbiddenError(HumanizaError):
+    """Acesso negado a recurso de outro usuário."""
+
+    code = "forbidden"
+    status_code = 403
+
+
+class RateLimitError(HumanizaError):
+    """Limite de requisições excedido (429)."""
+
+    code = "rate_limit_exceeded"
+    status_code = 429
+
+
+class ConflictError(HumanizaError):
+    """Recurso já existente (duplicidade)."""
+
+    code = "conflict"
+    status_code = 409

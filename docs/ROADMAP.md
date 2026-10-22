@@ -18,7 +18,7 @@
 | 5 | Citações, Referências e Validador | 3, 4 | NBR 6023/10520 + relatórios auditáveis | ✅ concluída |
 | 6 | Geração de Documentos | 4, 5 | DOCX nativo + PDF + histórico | ✅ concluída |
 | 7 | Interface e Experiência | 1–6 | 11 páginas + editor comparativo | ✅ concluída |
-| 8 | Segurança, Testes e Estabilização | 7 | Auth, isolamento, E2E, docs de deploy | ⛔ aguardando |
+| 8 | Segurança, Testes e Estabilização | 7 | Auth, isolamento, E2E, docs de deploy | ✅ concluída |
 
 **Paralelismo possível:** a Onda 4 depende apenas da Onda 1 (normalização) e do
 IR; pode ser iniciada enquanto a Onda 3 ainda está em curso, **desde que**
@@ -451,7 +451,7 @@ exibir custos estimados e consumo de tokens.
 
 ---
 
-## Onda 8 — Segurança, Testes e Estabilização
+## Onda 8 — Segurança, Testes e Estabilização ✅
 
 **Objetivo:** preparar uma versão estável.
 
@@ -465,15 +465,29 @@ exibir custos estimados e consumo de tokens.
   testes de integração · E2E · regressão ABNT · exportação · documentação de
   implantação.
 
+### Implementado
+
+- **Persistência relacional** (SQLAlchemy 2.0 + Alembic): `users`,
+  `documents`, `revisions`, `provider_credentials`, `exports`.
+- **Autenticação opt-in**: senhas PBKDF2-SHA256, tokens HMAC assinados com
+  expiração, rotas `/auth/{register,token,me}` e isolamento por `owner_id`.
+- **Uploads seguros** (`/uploads`): tamanho, magic bytes, nome sanitizado e
+  prevenção de path traversal.
+- **Rate limiting** por janela deslizante (login e humanização).
+- **Credenciais persistidas** AES-GCM + gestão/exclusão.
+- **Retenção/exclusão** de documentos (`/documents`, `prune`).
+- **Proteção contra prompt injection** (conteúdo delimitado + instrução de sistema).
+- **Docs**: `docs/DEPLOYMENT.md` e `docs/architecture/SECURITY_REVIEW.md`.
+
 ### Critérios de aceite
 
-- [ ] A suíte completa passa; nenhuma falha crítica conhecida.
-- [ ] Cobertura global ≥ 80%.
-- [ ] Revisão de segurança feita **e registrada** antes de qualquer
-      disponibilização pública.
-- [ ] `docs/DEPLOYMENT.md` cobre: variáveis de ambiente, migrações, proxy,
+- [x] A suíte completa passa; nenhuma falha crítica conhecida.
+- [x] Cobertura global ≥ 80% (medida: 95%).
+- [x] Revisão de segurança feita **e registrada**
+      (`docs/architecture/SECURITY_REVIEW.md`).
+- [x] `docs/DEPLOYMENT.md` cobre: variáveis de ambiente, migrações, proxy,
       TLS, backup, retenção e operação do renderizador de PDF.
-- [ ] Relatório da onda em `docs/waves/onda-8.md`.
+- [x] Relatório da onda em `docs/waves/onda-8.md`.
 
 ---
 
