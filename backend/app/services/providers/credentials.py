@@ -97,27 +97,34 @@ def last4(chave: str) -> str:
 
 
 class CredentialResolver:
-    """Resolve chaves de provedores combinando ambiente e sessão."""
+    """Resolve chaves de provedores combinando ambiente e sessão (isolada por dono).
+
+    A sessão em memória é indexada por ``(owner_id, provider)``, de modo que
+    um usuário nunca enxerga nem sobrescreve a credencial de sessão de outro
+    (`GAP-01`). A chave de ambiente é global (não depende de dono).
+    """
 
     def __init__(self, settings: Settings, cipher: SecretCipher | None = None) -> None:
         self._settings = settings
         self._cipher = cipher or SecretCipher.from_settings(settings)
-        self._session: dict[str, str] = {}
+        self._session: dict[tuple[str | None, str], str] = {}
 
-    def resolve(self, provider_id: ProviderId | str) -> str | None:
+    def resolve(self, provider_id: ProviderId | str, *, owner_id: str | None = None) -> str | None:
         """Devolve a chave em claro (uso interno, nunca registrada)."""
         provider = str(provider_id)
         env = self._env_value(provider)
         if env:
             return env
-        token = self._session.get(provider)
+        token = self._session.get((owner_id, provider))
         if token is None:
             return None
         if self._cipher.available:
             return self._cipher.decrypt(token)
         return token
 
-    def status(self, provider_id: ProviderId | str) -> CredentialStatus:
+    def status(
+        self, provider_id: ProviderId | str, *, owner_id: str | None = None
+    ) -> CredentialStatus:
         """Devolve o indicador público (configured/last4) sem a chave."""
         provider = str(provider_id)
         env = self._env_value(provider)
@@ -125,7 +132,7 @@ class CredentialResolver:
             return CredentialStatus(
                 provider=provider, configured=True, last4=last4(env), source="env"
             )
-        token = self._session.get(provider)
+        token = self._session.get((owner_id, provider))
         if token is not None:
             chave = self._cipher.decrypt(token) if self._cipher.available else token
             return CredentialStatus(
@@ -133,20 +140,31 @@ class CredentialResolver:
             )
         return CredentialStatus(provider=provider, configured=False)
 
-    def store(self, provider_id: ProviderId | str, chave: str) -> CredentialStatus:
-        """Armazena a chave na sessão (cifrada, quando possível)."""
+    def store(
+        self,
+        provider_id: ProviderId | str,
+        chave: str,
+        *,
+        owner_id: str | None = None,
+    ) -> CredentialStatus:
+        """Armazena a chave na sessão (cifrada, quando possível), isolada por dono."""
         provider = str(provider_id)
         token = self._cipher.encrypt(chave) if self._cipher.available else chave
-        self._session[provider] = token
+        self._session[(owner_id, provider)] = token
         return CredentialStatus(
             provider=provider, configured=True, last4=last4(chave), source="session"
         )
 
-    def delete(self, provider_id: ProviderId | str) -> CredentialStatus:
-        """Remove a credencial de sessão. A credencial de ambiente permanece."""
+    def delete(
+        self,
+        provider_id: ProviderId | str,
+        *,
+        owner_id: str | None = None,
+    ) -> CredentialStatus:
+        """Remove a credencial de sessão do dono. A credencial de ambiente permanece."""
         provider = str(provider_id)
-        self._session.pop(provider, None)
-        return self.status(provider)
+        self._session.pop((owner_id, provider), None)
+        return self.status(provider, owner_id=owner_id)
 
     def _env_value(self, provider: str) -> str | None:
         try:

@@ -15,8 +15,8 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+from typing import Any
 
-import pymupdf
 from pydantic import BaseModel, ConfigDict
 
 from app.services.academic.pagination import PageSide, resolve_margins
@@ -194,6 +194,20 @@ async def build_pdf_from_docx(
     )
 
 
+def _abrir_pdf(pdf_bytes: bytes) -> Any | None:
+    """Abre o PDF via ``pymupdf``, degradando graciosamente se indisponível.
+
+    ``pymupdf`` é uma dependência opcional (extra ``pdf``) para mitigar o risco
+    de licenciamento AGPL em um projeto MIT (`GAP-09`).
+    """
+    try:
+        import pymupdf
+
+        return pymupdf.open(stream=pdf_bytes, filetype="pdf")  # type: ignore[no-untyped-call]
+    except ImportError:
+        return None
+
+
 def compare_docx_and_pdf(
     docx_bytes: bytes,
     pdf_bytes: bytes,
@@ -211,7 +225,22 @@ def compare_docx_and_pdf(
     margens_anverso = resolve_margins(page_cfg, PageSide.ANVERSO)
     margens_verso = resolve_margins(page_cfg, PageSide.VERSO)
 
-    pdf_doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")  # type: ignore[no-untyped-call]
+    pdf_doc = _abrir_pdf(pdf_bytes)
+    if pdf_doc is None:
+        return PdfComparisonReport(
+            page_count=0,
+            page_width_cm=0.0,
+            page_height_cm=0.0,
+            page_size_matches_docx=False,
+            margins_respected=False,
+            pagination_valid=False,
+            undue_breaks=(),
+            docx_heading_count=inspecao.heading_count,
+            pdf_non_empty_pages=0,
+            differences=("Comparação indisponível: biblioteca pymupdf não instalada.",),
+            limitations=(*KNOWN_RENDERER_LIMITATIONS, "pymupdf indisponível para inspeção do PDF."),
+        )
+
     try:
         page_count = len(pdf_doc)
         if page_count == 0:
@@ -245,7 +274,7 @@ def compare_docx_and_pdf(
 
         for page_idx in range(page_count):
             page = pdf_doc[page_idx]
-            blocks = page.get_text("blocks")  # type: ignore[no-untyped-call]
+            blocks = page.get_text("blocks")
             text_blocks = [b for b in blocks if len(b) >= 5 and str(b[4]).strip()]
             if text_blocks:
                 non_empty_pages += 1
@@ -286,7 +315,7 @@ def compare_docx_and_pdf(
 
         pagination_valid = page_count >= 1 and non_empty_pages >= 1
     finally:
-        pdf_doc.close()  # type: ignore[no-untyped-call]
+        pdf_doc.close()
 
     return PdfComparisonReport(
         page_count=page_count,

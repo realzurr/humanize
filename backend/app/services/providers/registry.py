@@ -64,10 +64,20 @@ class ProviderRegistry:
             timeout_seconds=self._settings.llm_timeout_seconds,
         )
 
-    def build(self, provider_id: ProviderId | str) -> LLMProvider:
-        """Constrói o adaptador de um provedor, já configurado."""
+    def build(
+        self,
+        provider_id: ProviderId | str,
+        *,
+        api_key: str | None = None,
+    ) -> LLMProvider:
+        """Constrói o adaptador de um provedor, já configurado.
+
+        ``api_key``, quando informado, tem precedência sobre a resolução de
+        ambiente/sessão — permite que a camada de API entregue a chave
+        persistida do usuário autenticado (`GAP-02`).
+        """
         enum = ProviderId(provider_id)
-        chave = self._resolver.resolve(enum) or ""
+        chave = api_key if api_key is not None else (self._resolver.resolve(enum) or "")
         retry = self._retry_policy()
         transport = self._transport
 
@@ -93,9 +103,14 @@ class ProviderRegistry:
             return GeminiProvider(api_key=chave, transport=transport, retry_policy=retry)
         raise ValueError(f"provedor desconhecido: {provider_id}")
 
-    def status(self, provider_id: ProviderId | str) -> CredentialStatus:
+    def status(
+        self,
+        provider_id: ProviderId | str,
+        *,
+        owner_id: str | None = None,
+    ) -> CredentialStatus:
         """Indicador público da credencial do provedor (configured/last4)."""
-        return self._resolver.status(provider_id)
+        return self._resolver.status(provider_id, owner_id=owner_id)
 
     def describe(self, provider_id: ProviderId | str) -> dict[str, Any]:
         """Descrição serializável do provedor para a API de configuração."""

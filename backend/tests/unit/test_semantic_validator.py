@@ -2,6 +2,13 @@
 
 from __future__ import annotations
 
+from app.ir.protection import (
+    ProtectedEntity,
+    ProtectedKind,
+    ProtectionCatalog,
+    ProtectionLevel,
+)
+from app.ir.spans import SourceRange
 from app.services.semantic_validator import extract, mask, unmask, validate
 from app.services.semantic_validator.masker import placeholders_reproduzidos
 from app.services.semantic_validator.validator import FindingCategory, Severity
@@ -78,3 +85,39 @@ def test_unmask_ignora_placeholder_desconhecido() -> None:
     mascarado = mask(texto, catalog)
     resultado = unmask(mascarado.text + " ⟦P9999⟧", mascarado)
     assert "⟦P9999⟧" in resultado  # placeholder desconhecido permanece
+
+
+def _catalogo(start: int, texto: str, valor_fp: str) -> ProtectionCatalog:
+    entidade = ProtectedEntity(
+        id="P0001",
+        kind=ProtectedKind.NUMBER,
+        text=texto,
+        source_range=SourceRange(start=start, end=start + len(texto)),
+        level=ProtectionLevel.CRITICAL,
+        fingerprint=valor_fp,
+    )
+    return ProtectionCatalog(entities=(entidade,))
+
+
+def test_proximidade_80_code_points_gera_alteracao() -> None:
+    """GAP-07: na distância exata de 80 code points, a divergência é ALTERATION."""
+    original = _catalogo(0, "45", "fp-original")
+    revisado = _catalogo(80, "45,5", "fp-alterado")
+    report = validate(original, revisado)
+    assert any(f.category is FindingCategory.ALTERATION for f in report.findings)
+
+
+def test_proximidade_81_code_points_gera_perda() -> None:
+    """GAP-07: além de 80 code points, a divergência é tratada como LOSS."""
+    original = _catalogo(0, "45", "fp-original")
+    revisado = _catalogo(81, "45,5", "fp-alterado")
+    report = validate(original, revisado)
+    assert any(f.category is FindingCategory.LOSS for f in report.findings)
+    assert not any(f.category is FindingCategory.ALTERATION for f in report.findings)
+
+
+def test_report_has_critical() -> None:
+    original = _catalogo(0, "45", "fp-original")
+    revisado = _catalogo(100, "45,5", "fp-alterado")
+    report = validate(original, revisado)
+    assert report.has_critical

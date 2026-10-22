@@ -81,7 +81,7 @@ def test_resolver_sessao_cifrada(chave_32: bytes) -> None:
     resolver = CredentialResolver(Settings(encryption_key=key_b64))
     resolver.store("openai", "sk-segredo-123456")
     # O valor em memória não deve estar em claro.
-    token = resolver._session["openai"]
+    token = resolver._session[(None, "openai")]
     assert "sk-segredo-123456" not in token
     assert resolver.resolve("openai") == "sk-segredo-123456"
 

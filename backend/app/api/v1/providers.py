@@ -60,7 +60,7 @@ def _estado_combinado(
     owner_id: str | None,
 ) -> CredentialStatus:
     """Combina ambiente → sessão → banco para o estado público da credencial."""
-    estado = _registro(request).status(enum)
+    estado = _registro(request).status(enum, owner_id=owner_id)
     if estado.configured:
         return estado
     if _settings(request).credential_encryption_enabled:
@@ -116,13 +116,13 @@ async def armazenar_credencial(
     """Armazena a credencial (sessão + banco cifrado) e devolve só o indicador."""
     enum = _validar_provider(provider_id)
     registro = _registro(request)
-    estado = registro.status(enum)
+    owner_id = owner_id_of(usuario)
+    estado = registro.status(enum, owner_id=owner_id)
     if estado.configured and estado.source == "env":
         # Não sobrescreve chave de ambiente; apenas reporta que já existe.
         return _status_para_saida(estado)
 
-    owner_id = owner_id_of(usuario)
-    estado = request.app.state.provider_resolver.store(enum, corpo.api_key)
+    estado = request.app.state.provider_resolver.store(enum, corpo.api_key, owner_id=owner_id)
     if _settings(request).credential_encryption_enabled:
         _credential_store(request).save(session, str(enum), corpo.api_key, owner_id=owner_id)
     logger.info(
@@ -144,7 +144,7 @@ async def remover_credencial(
     """Remove a credencial de sessão e a persistida (a de ambiente permanece)."""
     enum = _validar_provider(provider_id)
     owner_id = owner_id_of(usuario)
-    estado = request.app.state.provider_resolver.delete(enum)
+    estado = request.app.state.provider_resolver.delete(enum, owner_id=owner_id)
     if _settings(request).credential_encryption_enabled:
         _credential_store(request).delete(session, str(enum), owner_id=owner_id)
     logger.info("credencial.removida", provedor=str(enum), configurada=estado.configured)

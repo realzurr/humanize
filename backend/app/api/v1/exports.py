@@ -10,14 +10,16 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import cast
+from typing import Annotated, cast
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Depends, Request, Response
 
+from app.api.deps import get_current_user, owner_id_of
 from app.core.config import Settings
 from app.core.errors import NotFoundError
 from app.core.logging import get_logger
 from app.ir.document import AcademicDocument, DocumentRevision, PipelineStage
+from app.models.user import User
 from app.schemas.exports import (
     DocumentHistoryResponse,
     ExportPreviewRequest,
@@ -69,15 +71,20 @@ def _resolver_template(
 
 
 @router.post("/exports", response_model=ExportResponse)
-async def exportar_documento(corpo: ExportRequest, request: Request) -> ExportResponse:
+async def exportar_documento(
+    corpo: ExportRequest,
+    request: Request,
+    usuario: Annotated[User | None, Depends(get_current_user)],
+) -> ExportResponse:
     """Gera as exportações solicitadas (DOCX, PDF, TXT, Markdown) e registra no histórico."""
     registry = _template_registry(request)
     store = _export_store(request)
     settings = _settings(request)
     template = _resolver_template(registry, corpo.template_id, corpo.instituicao)
+    owner_id = owner_id_of(usuario)
 
     # Recupera ou cria o AcademicDocument preservando original_text imutável
-    existente = store.get_document(corpo.document_id)
+    existente = store.get_document(corpo.document_id, owner_id)
     blocos = parse_text_to_blocks(corpo.texto)
     if existente is None:
         base_doc = AcademicDocument(
@@ -85,6 +92,7 @@ async def exportar_documento(corpo: ExportRequest, request: Request) -> ExportRe
             original_text=corpo.texto,
             blocks=blocos,
             metadata=corpo.metadados,
+            owner_id=owner_id,
         )
     else:
         base_doc = existente.model_copy(update={"metadata": corpo.metadados})
@@ -124,6 +132,7 @@ async def exportar_documento(corpo: ExportRequest, request: Request) -> ExportRe
             content=docx_result.content,
             template_id=template.id,
             institution_id=corpo.instituicao,
+            owner_id=owner_id,
             warnings=docx_result.warnings,
             docx_inspection=docx_result.inspection,
         )
@@ -152,6 +161,7 @@ async def exportar_documento(corpo: ExportRequest, request: Request) -> ExportRe
                 content=pdf_res.content,
                 template_id=template.id,
                 institution_id=corpo.instituicao,
+                owner_id=owner_id,
                 warnings=pdf_res.warnings,
                 limitations=pdf_res.limitations,
                 pdf_comparison=pdf_res.comparison,
@@ -172,6 +182,7 @@ async def exportar_documento(corpo: ExportRequest, request: Request) -> ExportRe
                         content=docx_result.content,
                         template_id=template.id,
                         institution_id=corpo.instituicao,
+                        owner_id=owner_id,
                         warnings=docx_result.warnings,
                         limitations=tuple(limitacoes),
                         docx_inspection=docx_result.inspection,
@@ -192,6 +203,7 @@ async def exportar_documento(corpo: ExportRequest, request: Request) -> ExportRe
                 content=txt_bytes,
                 template_id=template.id,
                 institution_id=corpo.instituicao,
+                owner_id=owner_id,
             )
         )
 
@@ -209,6 +221,7 @@ async def exportar_documento(corpo: ExportRequest, request: Request) -> ExportRe
                 content=md_bytes,
                 template_id=template.id,
                 institution_id=corpo.instituicao,
+                owner_id=owner_id,
             )
         )
 
@@ -239,6 +252,7 @@ async def exportar_documento(corpo: ExportRequest, request: Request) -> ExportRe
 async def pre_visualizar_documento(
     corpo: ExportPreviewRequest,
     request: Request,
+    _usuario: Annotated[User | None, Depends(get_current_user)],
 ) -> DocumentPreview:
     """Gera a pré-visualização estruturada do documento sem gravar arquivos em disco."""
     registry = _template_registry(request)
@@ -255,42 +269,52 @@ async def pre_visualizar_documento(
 @router.get("/exports", response_model=list[ExportRecord])
 async def listar_exportacoes(
     request: Request,
+    usuario: Annotated[User | None, Depends(get_current_user)],
     document_id: str | None = None,
 ) -> list[ExportRecord]:
-    """Lista o histórico de exportações realizadas."""
+    """Lista o histórico de exportações do usuário."""
     store = _export_store(request)
-    return store.list_records(document_id=document_id)
+    return store.list_records(document_id=document_id, owner_id=owner_id_of(usuario))
 
 
 @router.get("/exports/documents/{document_id}/history", response_model=DocumentHistoryResponse)
 async def consultar_historico_documento(
     document_id: str,
     request: Request,
+    usuario: Annotated[User | None, Depends(get_current_user)],
 ) -> DocumentHistoryResponse:
     """Devolve o histórico de revisões e versões exportadas de um documento."""
     store = _export_store(request)
-    resumo = store.summary_for_document(document_id)
+    resumo = store.summary_for_document(document_id, owner_id_of(usuario))
     return DocumentHistoryResponse(**resumo)
 
 
 @router.get("/exports/{export_id}", response_model=ExportRecord)
-async def detalhar_exportacao(export_id: str, request: Request) -> ExportRecord:
+async def detalhar_exportacao(
+    export_id: str,
+    request: Request,
+    usuario: Annotated[User | None, Depends(get_current_user)],
+) -> ExportRecord:
     """Devolve os metadados e o relatório de inspeção de uma exportação."""
     store = _export_store(request)
-    record = store.get(export_id)
+    record = store.get(export_id, owner_id_of(usuario))
     if record is None:
         raise NotFoundError(f"Exportação não encontrada: {export_id}")
     return record
 
 
 @router.get("/exports/{export_id}/download")
-async def baixar_exportacao(export_id: str, request: Request) -> Response:
+async def baixar_exportacao(
+    export_id: str,
+    request: Request,
+    usuario: Annotated[User | None, Depends(get_current_user)],
+) -> Response:
     """Faz o download do arquivo exportado."""
     store = _export_store(request)
-    record = store.get(export_id)
+    record = store.get(export_id, owner_id_of(usuario))
     if record is None:
         raise NotFoundError(f"Exportação não encontrada: {export_id}")
-    conteudo = store.read_bytes(export_id)
+    conteudo = store.read_bytes(export_id, owner_id_of(usuario))
     if conteudo is None:
         raise NotFoundError(f"Arquivo da exportação {export_id} não encontrado em disco.")
     media_type = MEDIA_TYPES[record.format]

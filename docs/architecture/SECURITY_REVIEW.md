@@ -52,3 +52,24 @@ Nenhuma falha crítica conhecida nas superfícies revisadas. A aplicação está
 pronta para **implantação controlada** (staging), não para exposição pública
 irrestrita, até que as pendências da seção 3 sejam resolvidas. A conformidade
 é declarada **por item verificado**, nunca presumida integralmente.
+
+---
+
+## 5. Adendo — Auditoria de QA (2026-10-22)
+
+Uma auditoria independente de qualidade (`backend/tests/docs/Actions.md`)
+confirmou sete bugs/vulnerabilidades reais (GAP-01 a GAP-09). Todos foram
+corrigidos no código e cobertos por testes de regressão:
+
+- **GAP-01/02**: isolamento cross-tenant de credenciais + resolução da chave
+  persistida pelo `ProviderRegistry.build()`.
+- **GAP-03**: autenticação/isolamento por `owner_id` em `/exports`, `/uploads`
+  e `/humanize`.
+- **GAP-04**: bypass de rate limit via `X-Forwarded-For` (agora exige
+  `BEHIND_PROXY=true`).
+- **GAP-05**: colisão de nomes e extração DOCX síncrona no upload.
+- **GAP-06**: `/health/readiness` com checagem real do banco.
+- **GAP-07/08**: testes de fronteira e de cascata ORM.
+- **GAP-09**: `pymupdf` tornado opcional (`ADR-0016`).
+
+O status detalhado da resolução está na seção 13 de `backend/tests/docs/Actions.md`.

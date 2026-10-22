@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
+from app.models.document import DocumentRevision
 from app.repositories.documents import DocumentRepository
 
 
@@ -47,3 +48,25 @@ def test_retencao_remove_documentos_expirados(db_session) -> None:
     )
     assert removidos == 1
     assert repo.get(documento.id, "u1") is None
+
+
+def test_revisao_vinculada_e_removida_em_cascata(db_session) -> None:
+    """GAP-08: `DocumentRevision` liga-se ao documento e é excluída em cascata."""
+    repo = DocumentRepository(db_session)
+    documento = repo.create("texto original", owner_id="u1")
+
+    revisao = DocumentRevision(
+        id="rev-1",
+        document_id=documento.id,
+        stage="normalize",
+        text="texto normalizado",
+    )
+    db_session.add(revisao)
+    db_session.commit()
+
+    carregado = repo.get(documento.id, "u1")
+    assert carregado is not None
+    assert [r.id for r in carregado.revisions] == ["rev-1"]
+
+    repo.delete(documento.id, "u1")
+    assert db_session.get(DocumentRevision, "rev-1") is None

@@ -41,6 +41,23 @@ class PersistentCredentialStore:
             provider=provider, configured=True, last4=last4(key), source="database"
         )
 
+    def resolve_plaintext(
+        self,
+        session: Session,
+        provider: str,
+        *,
+        owner_id: str | None = None,
+    ) -> str | None:
+        """Devolve a chave em claro persistida no banco, ou ``None`` se ausente.
+
+        Fecha o ciclo do `GAP-02`: permite que o ``ProviderRegistry.build``
+        use a credencial durável quando não há chave em ambiente ou sessão.
+        """
+        cred = CredentialRepository(session).get(provider, owner_id)
+        if cred is None or not self._cipher.available:
+            return None
+        return self._cipher.decrypt(cred.ciphertext)
+
     def status(
         self,
         session: Session,

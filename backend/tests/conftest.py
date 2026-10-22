@@ -54,11 +54,15 @@ def db_session(db_session_factory):
 @pytest.fixture
 def app_with_db(db_engine, db_session_factory):
     """Aplicação com a sessão de banco apontando para o SQLite em memória."""
+    from app.core.config import Settings
     from app.main import create_app
 
     app = create_app()
     app.state.engine = db_engine
     app.state.session_factory = db_session_factory
+    # Cópia isolada das configurações: evita que um teste mutue o cache global
+    # de `get_settings()` (compartilhado entre todos os testes).
+    app.state.settings = Settings()
     return app
 
 

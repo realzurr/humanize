@@ -106,6 +106,7 @@ class ExportRecord(BaseModel):
     size_bytes: int
     template_id: str
     institution_id: str | None = None
+    owner_id: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     warnings: tuple[str, ...] = ()
     limitations: tuple[str, ...] = ()
@@ -422,8 +423,13 @@ class ExportHistoryStore:
         """Registra ou atualiza o documento e seu histórico de revisões."""
         self._documents[document.id] = document
 
-    def get_document(self, document_id: str) -> AcademicDocument | None:
-        return self._documents.get(document_id)
+    def get_document(
+        self, document_id: str, owner_id: str | None = None
+    ) -> AcademicDocument | None:
+        documento = self._documents.get(document_id)
+        if documento is None:
+            return None
+        return documento if documento.owner_id == owner_id else None
 
     def record_export(
         self,
@@ -434,6 +440,7 @@ class ExportHistoryStore:
         content: bytes,
         template_id: str,
         institution_id: str | None = None,
+        owner_id: str | None = None,
         warnings: tuple[str, ...] = (),
         limitations: tuple[str, ...] = (),
         docx_inspection: DocxInspection | None = None,
@@ -471,6 +478,7 @@ class ExportHistoryStore:
             size_bytes=len(content),
             template_id=template_id,
             institution_id=institution_id,
+            owner_id=owner_id,
             warnings=warnings,
             limitations=limitations,
             docx_inspection=docx_inspection,
@@ -479,11 +487,14 @@ class ExportHistoryStore:
         self._records[export_id] = record
         return record
 
-    def get(self, export_id: str) -> ExportRecord | None:
-        return self._records.get(export_id)
-
-    def read_bytes(self, export_id: str) -> bytes | None:
+    def get(self, export_id: str, owner_id: str | None = None) -> ExportRecord | None:
         record = self._records.get(export_id)
+        if record is None:
+            return None
+        return record if record.owner_id == owner_id else None
+
+    def read_bytes(self, export_id: str, owner_id: str | None = None) -> bytes | None:
+        record = self.get(export_id, owner_id)
         if record is None:
             return None
         path = (self._export_dir / record.filename).resolve()
@@ -491,8 +502,12 @@ class ExportHistoryStore:
             return None
         return path.read_bytes()
 
-    def list_records(self, document_id: str | None = None) -> list[ExportRecord]:
-        itens = list(self._records.values())
+    def list_records(
+        self,
+        document_id: str | None = None,
+        owner_id: str | None = None,
+    ) -> list[ExportRecord]:
+        itens = [r for r in self._records.values() if r.owner_id == owner_id]
         if document_id is not None:
             itens = [r for r in itens if r.document_id == document_id]
         return sorted(itens, key=lambda r: r.created_at, reverse=True)
@@ -511,9 +526,9 @@ class ExportHistoryStore:
                 removidos += 1
         return removidos
 
-    def summary_for_document(self, document_id: str) -> dict[str, Any]:
+    def summary_for_document(self, document_id: str, owner_id: str | None = None) -> dict[str, Any]:
         """Devolve o histórico combinado de revisões do IR e de arquivos exportados."""
-        doc = self._documents.get(document_id)
+        doc = self.get_document(document_id, owner_id)
         revisoes = (
             [
                 {
@@ -528,7 +543,7 @@ class ExportHistoryStore:
             if doc is not None
             else []
         )
-        exports = [r.model_dump(mode="json") for r in self.list_records(document_id)]
+        exports = [r.model_dump(mode="json") for r in self.list_records(document_id, owner_id)]
         return {
             "document_id": document_id,
             "original_immutable": True,

@@ -15,7 +15,7 @@ class _StubRegistry:
     def __init__(self, provider: LLMProvider) -> None:
         self._provider = provider
 
-    def build(self, provider_id: str) -> LLMProvider:
+    def build(self, provider_id: str, *, api_key: str | None = None) -> LLMProvider:
         return self._provider
 
 

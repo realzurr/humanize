@@ -11,10 +11,18 @@ from __future__ import annotations
 from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, Request
+from sqlalchemy.orm import Session
 
-from app.api.deps import make_rate_limit_dependency
+from app.api.deps import (
+    get_current_user,
+    make_rate_limit_dependency,
+    owner_id_of,
+    resolve_provider_key,
+)
+from app.core.database import get_session
 from app.core.errors import NotFoundError, ValidationError
 from app.core.logging import get_logger
+from app.models.user import User
 from app.schemas.humanize import (
     AchadoOut,
     HumanizeRequest,
@@ -49,14 +57,18 @@ _MAX_AUTORAL_TEXT_LENGTH = 50_000
 async def humanize(
     requisicao: HumanizeRequest,
     request: Request,
+    session: Annotated[Session, Depends(get_session)],
+    usuario: Annotated[User | None, Depends(get_current_user)],
     _: Annotated[None, Depends(humanize_rate_limit)],
 ) -> HumanizeResponse:
     """Humaniza o texto preservando números, datas, DOIs e citações."""
-    perfil = _resolver_perfil(requisicao)
+    owner_id = owner_id_of(usuario)
+    perfil = _resolver_perfil(requisicao, owner_id)
     intensidade = _validar_intensidade(requisicao.intensidade)
 
     registro = cast(ProviderRegistry, request.app.state.provider_registry)
-    provedor = _resolver_provedor(registro, requisicao.provedor)
+    chave = resolve_provider_key(request, session, requisicao.provedor, owner_id)
+    provedor = _resolver_provedor(registro, requisicao.provedor, chave)
     modelo = requisicao.modelo or await _modelo_padrao(provedor)
 
     servico = HumanizerService(provedor)
@@ -94,11 +106,14 @@ async def humanize(
     )
 
 
-def _resolver_perfil(requisicao: HumanizeRequest) -> AuthorialProfile:
+def _resolver_perfil(requisicao: HumanizeRequest, owner_id: str | None) -> AuthorialProfile:
     if requisicao.perfil == AUTORAL_ID:
+        # Com autenticação ativa, o owner_id vem do token (nunca do JSON do
+        # cliente); no modo local, usa-se o valor informado na requisição.
+        dono = owner_id or requisicao.owner_id or ""
         try:
             return build_autoral_profile(
-                requisicao.owner_id or "",
+                dono,
                 tuple(t[:_MAX_AUTORAL_TEXT_LENGTH] for t in requisicao.textos_autorais),
             )
         except ValueError as exc:
@@ -116,9 +131,13 @@ def _validar_intensidade(valor: int) -> Intensity:
         raise ValidationError(str(exc)) from exc
 
 
-def _resolver_provedor(registro: ProviderRegistry, provider_id: str) -> LLMProvider:
+def _resolver_provedor(
+    registro: ProviderRegistry,
+    provider_id: str,
+    chave: str | None,
+) -> LLMProvider:
     try:
-        return registro.build(provider_id)
+        return registro.build(provider_id, api_key=chave)
     except ValueError as exc:
         raise NotFoundError(str(exc)) from exc
 

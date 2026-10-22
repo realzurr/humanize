@@ -26,6 +26,7 @@
 | [ADR-0013](decisions/ADR-0013-human-approval-gate.md) | Bloqueio de aprovação automática em perda de dado protegido | ✅ Aceita | 2026-10-21 | Alto |
 | [ADR-0014](decisions/ADR-0014-project-license.md) | Licença MIT, autoria (`realzurr`) e créditos à referência | ✅ Aceita | 2026-10-21 | Alto |
 | [ADR-0015](decisions/ADR-0015-abnt-sources-and-conformity.md) | Conformidade declarada por regra, com fonte e confiança | ✅ Aceita | 2026-10-21 | Alto |
+| [ADR-0016](decisions/ADR-0016-pymupdf-optional-dependency.md) | `pymupdf` como dependência opcional (licenciamento AGPL) | ✅ Aceita | 2026-10-22 | Médio |
 
 ---
 

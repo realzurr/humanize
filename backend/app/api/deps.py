@@ -20,6 +20,8 @@ from app.core.errors import RateLimitError, UnauthorizedError
 from app.core.ratelimit import SlidingWindowLimiter, client_ip
 from app.core.security import TokenService
 from app.models.user import User
+from app.services.providers.credentials import CredentialResolver
+from app.services.providers.persistent_credentials import PersistentCredentialStore
 
 
 def _settings(request: Request) -> Settings:
@@ -62,20 +64,42 @@ def owner_id_of(user: User | None) -> str | None:
     return user.id if user is not None else None
 
 
-def make_rate_limit_dependency(
-    limiter_name: str,
-    *,
-    key_extractor: Callable[[Request], str] = client_ip,
-) -> Callable[[Request], None]:
-    """Cria uma dependência de limite de requisições apontando para um limiter."""
+def resolve_provider_key(
+    request: Request,
+    session: Session,
+    provider_id: str,
+    owner_id: str | None,
+) -> str | None:
+    """Resolve a chave de um provedor para o dono (ambiente → sessão → banco).
+
+    Fecha o `GAP-02`: a credencial persistida no banco é usada quando não há
+    chave em ambiente nem em sessão, permitindo que o ``ProviderRegistry.build``
+    receba a chave do usuário autenticado.
+    """
+    resolver = cast(CredentialResolver, request.app.state.provider_resolver)
+    chave = resolver.resolve(provider_id, owner_id=owner_id)
+    if chave:
+        return chave
+    settings = cast(Settings, request.app.state.settings)
+    if settings.credential_encryption_enabled:
+        store = cast(PersistentCredentialStore, request.app.state.credential_store)
+        return store.resolve_plaintext(session, provider_id, owner_id=owner_id)
+    return None
+
+
+def make_rate_limit_dependency(limiter_name: str) -> Callable[[Request], None]:
+    """Cria uma dependência de limite de requisições apontando para um limiter.
+
+    A chave de limitação é o IP do cliente, respeitando ``Settings.behind_proxy``
+    para só confiar em ``X-Forwarded-For`` quando atrás de um proxy reverso.
+    """
 
     def dependency(request: Request) -> None:
         limiter = request.app.state.rate_limiters.get(limiter_name)
-        if limiter is None:
+        if limiter is None or not isinstance(limiter, SlidingWindowLimiter):
             return
-        if not isinstance(limiter, SlidingWindowLimiter):
-            return
-        if not limiter.allow(key_extractor(request)):
+        key = client_ip(request, trust_proxy=_settings(request).behind_proxy)
+        if not limiter.allow(key):
             raise RateLimitError("limite de requisições excedido")
 
     return dependency

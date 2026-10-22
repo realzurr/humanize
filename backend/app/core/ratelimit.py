@@ -37,11 +37,18 @@ class SlidingWindowLimiter:
             return True
 
 
-def client_ip(request: Request) -> str:
-    """Devolve o IP do cliente (respeitando ``X-Forwarded-For`` quando presente)."""
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",", 1)[0].strip()
+def client_ip(request: Request, *, trust_proxy: bool = False) -> str:
+    """Devolve o IP do cliente para fins de limitação.
+
+    ``X-Forwarded-For`` só é considerado quando ``trust_proxy`` é verdadeiro
+    (a aplicação está atrás de um proxy reverso confiável); caso contrário,
+    usa-se o IP direto da conexão, evitando o bypass por falsificação do
+    cabeçalho (`GAP-04`).
+    """
+    if trust_proxy:
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            return forwarded.split(",", 1)[0].strip()
     if request.client is not None:
         return request.client.host
     return "unknown"

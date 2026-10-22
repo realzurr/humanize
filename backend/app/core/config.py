@@ -104,6 +104,13 @@ class Settings(BaseSettings):
     rate_limit_humanize_per_minute: int = 30
     """Limite de requisições de humanização por minuto (por IP)."""
 
+    behind_proxy: bool = False
+    """Indica que a aplicação está atrás de um proxy reverso confiável.
+
+    Quando ``True``, o rate limiter confia no cabeçalho ``X-Forwarded-For``;
+    quando ``False`` (padrão), usa o IP direto da conexão (`GAP-04`).
+    """
+
     document_retention_days: int = 30
     """Prazo de retenção de documentos (dias)."""
 
