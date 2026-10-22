@@ -20,6 +20,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    // Sourcemaps em dist/ seriam servidos publicamente pelo Nginx de produção.
+    sourcemap: false,
   },
 });

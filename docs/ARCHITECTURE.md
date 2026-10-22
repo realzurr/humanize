@@ -631,14 +631,30 @@ Entidades:
 
 Autenticação **opt-in** (`Settings.auth_enabled`): registrada na Onda 8.
 
-- Senhas: PBKDF2-SHA256 (`app/core/security.py`), salt por usuário, verificação
-  em tempo constante.
-- Tokens: assinados com HMAC-SHA256 (`TokenService`), com expiração e `jti`.
-- Rotas: `POST /auth/register`, `POST /auth/token`, `GET /auth/me`.
+- Senhas: Argon2id (`app/core/security.py`), salt por usuário, verificação em
+  tempo constante, executada fora do event loop (`asyncio.to_thread`). Hashes
+  PBKDF2-SHA256 legados (ou Argon2id com parâmetros antigos) são refeitos no
+  login (`needs_rehash`).
+- Tokens: assinados com HMAC-SHA256 (`TokenService`), com `iat`, expiração e
+  `jti`; rotação via `PREVIOUS_SECRET_KEYS`; revogação por `jti`
+  (`POST /auth/logout`) e por usuário via `RevocationStore` — persistida no banco
+  por padrão (`SqlRevocationStore`, `ADR-0018`).
+- Rotas: `POST /auth/register`, `POST /auth/token`, `POST /auth/logout`,
+  `POST /auth/logout-all` (revoga todos os tokens do próprio usuário), `GET /auth/me`.
 - `get_current_user` (`app/api/deps.py`) devolve o usuário ou `None` no modo
-  local; o `owner_id` isola documentos e credenciais por usuário.
+  local; o `owner_id` isola documentos, exportações e credenciais por usuário.
 - Rate limiting por janela deslizante (`app/core/ratelimit.py`) em login e
-  humanização.
+  humanização, com backend `memory` (por processo), `sqlite` (workers do mesmo
+  host) ou `redis` (vários nós, script Lua atômico). Atrás de proxy, o IP vem da entrada `-TRUSTED_PROXY_HOPS` do
+  `X-Forwarded-For`.
+- Retenção: `run_retention_sweep` (`app/main.py`) remove documentos,
+  exportações (linha + arquivo) e uploads expirados, opcionalmente em loop
+  periódico (`RETENTION_SWEEP_INTERVAL_SECONDS`).
+- Chaves de LLM: valor direto ou indireção para cofre externo
+  (`<PROVEDOR>_API_KEY_ENV_NAME`, nomes reservados bloqueados) ou arquivo de
+  segredo (`<PROVEDOR>_API_KEY_FILE`).
+- Frontend: token apenas em memória; `POST /auth/logout` ao sair; resposta 401
+  encerra a sessão local.
 
 ---
 
@@ -679,7 +695,7 @@ incluindo a verificação de ausência de segredos no navegador).
 | SSRF em consulta de DOI | Allowlist de hosts, opt-in, timeout | 5 |
 | Path traversal em template | Templates lidos de diretório allowlisted, ID validado contra schema | 4 |
 | Prompt injection via documento | Texto importado delimitado + instrução anti-instrução | 2–3, 8 |
-| Autenticação e isolamento | `owner_id` + tokens assinados + senha PBKDF2 | 8 |
+| Autenticação e isolamento | `owner_id` + tokens assinados + senha Argon2id | 8 |
 | Upload malicioso | Limite de tamanho, magic bytes, nome sanitizado, sem path traversal | 8 |
 | Força bruta / abuso de API | Rate limiting por janela deslizante | 8 |
 | Cross-tenant | `owner_id` obrigatório em toda consulta | 8 |

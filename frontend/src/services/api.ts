@@ -18,8 +18,10 @@ import type {
   RelatorioNormalizacao,
   RequisicaoExportacao,
   RequisicaoHumanizacao,
+  RequisicaoLogin,
   RequisicaoNormalizacao,
   RequisicaoPreVisualizacao,
+  RequisicaoRegistro,
   RequisicaoValidacaoAcademica,
   ResolveTemplate,
   RespostaExportacao,
@@ -27,9 +29,39 @@ import type {
   RespostaSaude,
   RespostaValidacaoAcademica,
   TemplateResumo,
+  TokenResponse,
+  UsuarioOut,
 } from '@/types';
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api/v1';
+
+/**
+ * Token de acesso em memória (nunca em `localStorage`/`sessionStorage`).
+ * O `AuthContext` define/limpa este valor via `definirToken`.
+ */
+let tokenAtual: string | null = null;
+
+export function definirToken(token: string | null): void {
+  tokenAtual = token;
+}
+
+/** Notificado quando o backend recusa o token (expirado ou revogado). */
+let aoSessaoExpirar: (() => void) | null = null;
+
+export function definirAoSessaoExpirar(callback: (() => void) | null): void {
+  aoSessaoExpirar = callback;
+}
+
+function cabecalhosAutenticacao(): Record<string, string> {
+  return tokenAtual ? { Authorization: `Bearer ${tokenAtual}` } : {};
+}
+
+function tratarNaoAutorizado(status: number): void {
+  if (status === 401 && tokenAtual) {
+    definirToken(null);
+    aoSessaoExpirar?.();
+  }
+}
 
 export class ApiError extends Error {
   constructor(
@@ -44,12 +76,16 @@ export class ApiError extends Error {
 }
 
 async function requisicao<T>(caminho: string, init?: RequestInit): Promise<T> {
-  const resposta = await fetch(`${BASE_URL}${caminho}`, {
-    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
-    ...init,
-  });
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(init?.headers as Record<string, string> | undefined),
+    ...cabecalhosAutenticacao(),
+  };
+
+  const resposta = await fetch(`${BASE_URL}${caminho}`, { ...init, headers });
 
   if (!resposta.ok) {
+    tratarNaoAutorizado(resposta.status);
     let corpo: unknown;
     try {
       corpo = await resposta.json();
@@ -65,11 +101,32 @@ async function requisicao<T>(caminho: string, init?: RequestInit): Promise<T> {
     );
   }
 
+  if (resposta.status === 204) {
+    return undefined as T;
+  }
   return (await resposta.json()) as T;
 }
 
 export const api = {
   health: () => requisicao<RespostaSaude>('/health'),
+
+  registrar: (corpo: RequisicaoRegistro) =>
+    requisicao<UsuarioOut>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(corpo),
+    }),
+
+  entrar: (corpo: RequisicaoLogin) =>
+    requisicao<TokenResponse>('/auth/token', {
+      method: 'POST',
+      body: JSON.stringify(corpo),
+    }),
+
+  me: () => requisicao<UsuarioOut>('/auth/me'),
+
+  sair: () => requisicao<void>('/auth/logout', { method: 'POST' }),
+
+  sairDeTodasAsSessoes: () => requisicao<void>('/auth/logout-all', { method: 'POST' }),
 
   normalize: (corpo: RequisicaoNormalizacao) =>
     requisicao<RelatorioNormalizacao>('/normalize', {
@@ -139,8 +196,11 @@ export const api = {
 
 /** Faz o download binário de uma exportação e dispara o salvamento no navegador. */
 export async function baixarExportacao(exportId: string, filename: string): Promise<void> {
-  const resposta = await fetch(`${BASE_URL}/exports/${encodeURIComponent(exportId)}/download`);
+  const resposta = await fetch(`${BASE_URL}/exports/${encodeURIComponent(exportId)}/download`, {
+    headers: cabecalhosAutenticacao(),
+  });
   if (!resposta.ok) {
+    tratarNaoAutorizado(resposta.status);
     throw new ApiError(`Falha no download: ${resposta.status}`, resposta.status);
   }
   const blob = await resposta.blob();

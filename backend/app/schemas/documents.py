@@ -35,3 +35,6 @@ class PruneResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     removidos: int
+    """Total removido (documentos + exportações); mantido por compatibilidade."""
+    documentos: int = 0
+    exportacoes: int = 0

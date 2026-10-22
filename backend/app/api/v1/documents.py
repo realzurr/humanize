@@ -19,6 +19,7 @@ from app.core.errors import NotFoundError
 from app.models.document import Document
 from app.models.user import User
 from app.repositories.documents import DocumentRepository
+from app.repositories.exports import ExportRepository
 from app.schemas.documents import DocumentCreateRequest, DocumentOut, PruneResponse
 
 router = APIRouter(tags=["documentos"])
@@ -86,11 +87,23 @@ async def aplicar_retencao(
     usuario: Annotated[User | None, Depends(get_current_user)],
     session: Annotated[Session, Depends(get_session)],
 ) -> PruneResponse:
-    """Aplica a política de retenção sobre os documentos do usuário."""
+    """Aplica a política de retenção sobre documentos e exportações do usuário."""
     settings: Settings = request.app.state.settings
-    removidos = DocumentRepository(session).prune_expired(
-        now=datetime.now(UTC).replace(tzinfo=None),
+    owner = owner_id_of(usuario)
+    agora_naive = datetime.now(UTC).replace(tzinfo=None)
+    docs_removidos = DocumentRepository(session).prune_expired(
+        now=agora_naive,
         retention_days=settings.document_retention_days,
-        owner_id=owner_id_of(usuario),
+        owner_id=owner,
     )
-    return PruneResponse(removidos=removidos)
+    exports_removidos = ExportRepository(session).prune_expired(
+        now=agora_naive,
+        retention_days=settings.document_retention_days,
+        owner_id=owner,
+        export_dir=settings.export_dir,
+    )
+    return PruneResponse(
+        removidos=docs_removidos + exports_removidos,
+        documentos=docs_removidos,
+        exportacoes=exports_removidos,
+    )

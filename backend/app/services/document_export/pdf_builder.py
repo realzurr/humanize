@@ -11,6 +11,7 @@ de página, margens, paginação, presença de títulos e quebras indevidas.
 from __future__ import annotations
 
 import asyncio
+import re
 import shutil
 import subprocess
 import tempfile
@@ -194,8 +195,87 @@ async def build_pdf_from_docx(
     )
 
 
+_LIMITACAO_INSPETOR_NATIVO = (
+    "Inspetor nativo (sem pymupdf): margens, páginas vazias e quebras indevidas não foram "
+    "verificadas; apenas contagem de páginas e tamanho da primeira página."
+)
+_LIMITACAO_PDF_COMPRIMIDO = (
+    "Estrutura do PDF comprimida não inspecionável sem pymupdf; contagem de páginas indisponível."
+)
+_PDF_PAGE_RE = re.compile(rb"/Type\s*/Page\b")
+_PDF_MEDIABOX_RE = re.compile(
+    rb"/MediaBox\s*\[\s*([-+]?\d+(?:\.\d+)?)\s+([-+]?\d+(?:\.\d+)?)\s+"
+    rb"([-+]?\d+(?:\.\d+)?)\s+([-+]?\d+(?:\.\d+)?)\s*\]"
+)
+
+
+def _inspecionar_pdf_nativo(
+    pdf_bytes: bytes,
+    inspecao: DocxInspection,
+) -> PdfComparisonReport:
+    """Inspeção estrutural nativa em Python puro (sem depender de ``pymupdf``/AGPL)."""
+    if not pdf_bytes.startswith(b"%PDF-"):
+        return PdfComparisonReport(
+            page_count=0,
+            page_width_cm=0.0,
+            page_height_cm=0.0,
+            page_size_matches_docx=False,
+            margins_respected=False,
+            pagination_valid=False,
+            undue_breaks=(),
+            docx_heading_count=inspecao.heading_count,
+            pdf_non_empty_pages=0,
+            differences=("Conteúdo PDF inválido.",),
+            limitations=KNOWN_RENDERER_LIMITATIONS,
+        )
+
+    page_count = len(_PDF_PAGE_RE.findall(pdf_bytes))
+    m_box = _PDF_MEDIABOX_RE.search(pdf_bytes)
+    if m_box is not None:
+        x0, y0, x1, y1 = (float(g) for g in m_box.groups())
+        width_cm = round((x1 - x0) / _PT_PER_CM, 2)
+        height_cm = round((y1 - y0) / _PT_PER_CM, 2)
+    else:
+        width_cm = 0.0
+        height_cm = 0.0
+
+    size_matches = (
+        page_count > 0
+        and abs(width_cm - inspecao.page_width_cm) <= _PAGE_SIZE_TOLERANCE_CM
+        and abs(height_cm - inspecao.page_height_cm) <= _PAGE_SIZE_TOLERANCE_CM
+    )
+    differences: list[str] = []
+    # O inspetor nativo não extrai texto nem posições: nada pode ser afirmado sobre
+    # margens, quebras ou páginas vazias (AGENTS.md §5 — conformidade só por regra validada).
+    limitacoes: list[str] = [*KNOWN_RENDERER_LIMITATIONS, _LIMITACAO_INSPETOR_NATIVO]
+    if page_count == 0:
+        differences.append(
+            "Nenhuma página localizada pelo inspetor nativo; o PDF pode usar object streams "
+            "comprimidos (PDF 1.5+)."
+        )
+        limitacoes.append(_LIMITACAO_PDF_COMPRIMIDO)
+    if inspecao.has_toc_field:
+        differences.append(
+            "O campo TOC requer atualização prévia no Word/LibreOffice para listar os números "
+            "finais de página no PDF."
+        )
+    return PdfComparisonReport(
+        page_count=page_count,
+        page_width_cm=width_cm,
+        page_height_cm=height_cm,
+        page_size_matches_docx=size_matches,
+        margins_respected=False,
+        pagination_valid=page_count >= 1,
+        undue_breaks=(),
+        docx_heading_count=inspecao.heading_count,
+        pdf_non_empty_pages=0,
+        differences=tuple(differences),
+        limitations=tuple(limitacoes),
+    )
+
+
 def _abrir_pdf(pdf_bytes: bytes) -> Any | None:
-    """Abre o PDF via ``pymupdf``, degradando graciosamente se indisponível.
+    """Abre o PDF via ``pymupdf``, degradando para o inspetor nativo se indisponível.
 
     ``pymupdf`` é uma dependência opcional (extra ``pdf``) para mitigar o risco
     de licenciamento AGPL em um projeto MIT (`GAP-09`).
@@ -227,19 +307,7 @@ def compare_docx_and_pdf(
 
     pdf_doc = _abrir_pdf(pdf_bytes)
     if pdf_doc is None:
-        return PdfComparisonReport(
-            page_count=0,
-            page_width_cm=0.0,
-            page_height_cm=0.0,
-            page_size_matches_docx=False,
-            margins_respected=False,
-            pagination_valid=False,
-            undue_breaks=(),
-            docx_heading_count=inspecao.heading_count,
-            pdf_non_empty_pages=0,
-            differences=("Comparação indisponível: biblioteca pymupdf não instalada.",),
-            limitations=(*KNOWN_RENDERER_LIMITATIONS, "pymupdf indisponível para inspeção do PDF."),
-        )
+        return _inspecionar_pdf_nativo(pdf_bytes, inspecao)
 
     try:
         page_count = len(pdf_doc)

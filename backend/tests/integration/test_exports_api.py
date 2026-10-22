@@ -5,17 +5,16 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.main import create_app
 from app.services.document_export.writer import ExportHistoryStore
 
 
 @pytest.fixture
-def client(tmp_path: Path) -> TestClient:
-    app = create_app()
-    app.state.export_store = ExportHistoryStore(tmp_path / "exports", retention_days=30)
-    return TestClient(app)
+def client(app_with_db: FastAPI, tmp_path: Path) -> TestClient:
+    app_with_db.state.export_store = ExportHistoryStore(tmp_path / "exports", retention_days=30)
+    return TestClient(app_with_db)
 
 
 def test_exports_api_generates_docx_txt_md_and_declares_pdf_limitation_when_none(
@@ -140,3 +139,46 @@ def test_exports_api_pdf_only_falls_back_to_docx_txt_md_when_renderer_none(
     assert data["pdf_available"] is False
     assert {item["format"] for item in data["exports"]} == {"docx", "txt", "md"}
     assert len(data["limitations"]) >= 1
+
+
+def test_exports_api_persists_in_orm_and_recovers_after_memory_store_reset(
+    app_with_db: object,
+    tmp_path: Path,
+) -> None:
+    from fastapi import FastAPI
+
+    app = app_with_db  # type: ignore[assignment]
+    assert isinstance(app, FastAPI)
+    export_dir = tmp_path / "exports_orm"
+    app.state.settings = app.state.settings.model_copy(
+        update={"pdf_renderer": "none", "export_dir": export_dir}
+    )
+    app.state.export_store = ExportHistoryStore(export_dir, retention_days=30)
+    client = TestClient(app)
+
+    resp = client.post(
+        "/api/v1/exports",
+        json={
+            "document_id": "doc-orm-persist",
+            "texto": "# Introdução\n\nTexto persistido.",
+            "template_id": "abnt.tcc",
+            "formatos": ["txt"],
+        },
+    )
+    assert resp.status_code == 200
+    exp_id = resp.json()["exports"][0]["id"]
+
+    # Simula reinício do processo limpando o store em memória (mantendo o disco e o banco)
+    app.state.export_store = ExportHistoryStore(export_dir, retention_days=30)
+
+    lista = client.get("/api/v1/exports", params={"document_id": "doc-orm-persist"})
+    assert lista.status_code == 200
+    assert [item["id"] for item in lista.json()] == [exp_id]
+
+    detalhe = client.get(f"/api/v1/exports/{exp_id}")
+    assert detalhe.status_code == 200
+    assert detalhe.json()["id"] == exp_id
+
+    download = client.get(f"/api/v1/exports/{exp_id}/download")
+    assert download.status_code == 200
+    assert "Texto persistido." in download.text

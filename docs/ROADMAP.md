@@ -561,13 +561,15 @@ Detalhamento em [`architecture/RISK_REGISTER.md`](architecture/RISK_REGISTER.md)
 
 - Exportação para LaTeX (não solicitado; adicionar apenas com autorização).
 - Detecção de plágio / similaridade (fora de escopo).
-- Importação de documentos `.docx` como entrada (previsto na Onda 6).
 - Painel de "conformidade" por instituição, com comparação automático entre
   duas versões do manual institucional.
 - Suporte a outros idiomas no pipeline de humanização (o IR já é agnóstico).
-- Indireção de chave de LLM por cofre externo (`*_API_KEY_ENV_NAME`): o
-  `.env.example` foi limpo porque `Settings` não implementa essas variáveis;
-  implementar na Onda 8 (segurança) ou mantê-las fora do escopo.
+- ~~Importação de `.docx`~~: já implementada (`POST /api/v1/uploads`); item
+  mantido riscado apenas para histórico.
+- **Papel administrativo** (ex.: `is_admin` em `users`) para desativar
+  usuários e revogar tokens de terceiros via `revoke_subject`. Exige decisão
+  do responsável sobre o modelo de autorização (`ADR-0019`). O próprio
+  usuário já pode usar `POST /auth/logout-all`.
 
 ---
 

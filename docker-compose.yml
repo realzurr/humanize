@@ -6,6 +6,9 @@
 #
 #   docker compose up -d db          # apenas o banco
 #   docker compose --profile app up  # banco + API + frontend
+#   BACKEND_EXTRAS=redis RATE_LIMIT_BACKEND=redis \
+#     docker compose --profile app --profile redis up --build
+#                                    # + Redis para rate limit multi-nó
 #
 # Para desenvolvimento, prefira rodar o backend direto com `uvicorn`
 # (ver README) — o compose é para testar a topologia completa.
@@ -37,6 +40,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        EXTRAS: ${BACKEND_EXTRAS:-}
     container_name: humaniza-api
     profiles: ["app"]
     env_file:
@@ -45,6 +50,8 @@ services:
     environment:
       ENVIRONMENT: development
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-humaniza}:${POSTGRES_PASSWORD:-humaniza_local_dev}@db:5432/${POSTGRES_DB:-humaniza}
+      RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND:-memory}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     volumes:
       - ./backend:/app
       - ./templates:/templates:ro
@@ -62,6 +69,22 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: humaniza-redis
+    # Opcional: só sobe com `--profile redis` (RATE_LIMIT_BACKEND=redis).
+    profiles: ["redis"]
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      # Exposto apenas em loopback.
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
 
   frontend:

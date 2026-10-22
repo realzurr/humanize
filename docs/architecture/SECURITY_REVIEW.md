@@ -21,28 +21,27 @@ limites de consumo e retenção.
 | # | Área | Mitigação | Testado? | Risco residual |
 |---|---|---|---|---|
 | 1 | Segredos em log/resposta | `redact_secrets` (`app/core/logging.py`); API só expõe `configured`/`last4` | ✅ `test_logging.py`, `test_provider_credentials.py` | Nenhum crítico conhecido |
-| 2 | Hash de senha | PBKDF2-SHA256 (600k iterações, salt por usuário) via `cryptography` | ✅ `test_security.py` | Trocar por Argon2id futuramente |
-| 3 | Tokens de acesso | HMAC-SHA256 assinado, com expiração e `jti`; `SECRET_KEY` obrigatória | ✅ `test_security.py`, `test_auth_api.py` | Rotação de chave não implementada |
-| 4 | Isolamento por usuário | `owner_id` em documentos/credenciais; `get_current_user` opt-in | ✅ `test_documents_api.py`, `test_persistent_credentials.py` | Modo local (`AUTH_ENABLED=false`) não isola |
-| 5 | Credenciais em repouso | AES-GCM (`SecretCipher`), chave fora do banco | ✅ `test_persistent_credentials.py` | Exige `ENCRYPTION_KEY`; sem ela, só sessão |
+| 2 | Hash de senha | Argon2id (padrão, `cryptography` ≥ 44) + PBKDF2-SHA256 (retrocompatível, com *rehash* automático no login), fora do event loop | ✅ `test_security.py`, `test_auth_api.py` | Nenhum crítico conhecido |
+| 3 | Tokens de acesso | HMAC-SHA256 assinado (`iat`, `exp`, `jti`), rotação (`PREVIOUS_SECRET_KEYS`, CSV/JSON) e revogação por `jti` (`/auth/logout`, chamado pelo frontend ao sair) persistida no banco e compartilhada entre workers, com poda de expirados | ✅ `test_security.py`, `test_auth_api.py`, `test_revocation_store.py`, `auth.test.tsx` | Revogação de terceiros sem rota (não há papel administrativo); o próprio usuário usa `/auth/logout-all` |
+| 4 | Isolamento por usuário | `owner_id` em documentos/credenciais/exportações; `get_current_user` opt-in | ✅ `test_documents_api.py`, `test_persistent_credentials.py` | Modo local (`AUTH_ENABLED=false`) não isola |
+| 5 | Credenciais em repouso | AES-GCM (`SecretCipher`), rotação (`previous_encryption_keys`), chave fora do banco | ✅ `test_persistent_credentials.py`, `test_provider_credentials.py` | Exige `ENCRYPTION_KEY`; sem ela, só sessão |
 | 6 | Uploads | Tamanho, magic bytes, nome sanitizado, `is_relative_to`/prefixo | ✅ `test_ingestion.py`, `test_uploads_api.py` | DOCX lido via `python-docx` (entrada não confiável é conteúdo) |
 | 7 | Prompt injection | Conteúdo delimitado + instrução de sistema anti-instrução | ✅ `test_humanizer_engine.py` | Heurística; depende também do provedor |
-| 8 | Rate limiting | Janela deslizante em memória (login, humanização) | ✅ `test_ratelimit.py`, `test_rate_limit_api.py` | Por processo; usar Redis para múltiplos workers |
-| 9 | Retenção/exclusão | `document_retention_days` + `prune_expired` + rotas de exclusão | ✅ `test_documents_repository.py` | Sem rotina agendada automática |
-| 10 | CORS/TLS | CORS via `allow_origins`; TLS no proxy | Manual | TLS depende do deploy |
+| 8 | Rate limiting | Janela deslizante (`memory`, `sqlite` WAL multi-worker ou `redis` com script Lua atômico); IP pela entrada `-TRUSTED_PROXY_HOPS` do `X-Forwarded-For` | ✅ `test_ratelimit.py`, `test_rate_limit_api.py`, `test_config.py` | `memory` é por processo — usar `sqlite`/`redis` com vários workers |
+| 9 | Retenção/exclusão | `document_retention_days` + `run_retention_sweep` (documentos, exportações — linha e arquivo — e uploads), loop resiliente a falhas | ✅ `test_documents_repository.py`, `test_documents_api.py`, `test_export_repository.py` | Configurar `RETENTION_SWEEP_INTERVAL_SECONDS` em produção |
+| 10 | CORS/TLS/Headers | CORS via `allow_origins`; TLS e CSP/HSTS/X-Content-Type-Options no Nginx (repetidos em `location` com `add_header` próprio) | ✅ `nginxHeaders.test.ts` (estático) + verificação manual em contêiner | TLS depende do deploy |
 
 ---
 
-## 3. Pendências de segurança (antes de público)
+## 3. Pendências de segurança (status atualizado)
 
-1. **Backend de rate limit compartilhado** (Redis) para múltiplos workers.
-2. **Rotação de `SECRET_KEY`/`ENCRYPTION_KEY`** e invalidação de tokens.
-3. **Autenticação no frontend** (login/registro + token em memória) — o backend
-   é opt-in; a UI da Onda 7 opera em modo local sem login.
-4. **Auditoria de dependências** (`npm audit` / `pip-audit`) no CI.
-5. **Cabeçalhos de segurança** (CSP, HSTS, X-Content-Type-Options) no proxy.
-6. **Rotina agendada de retenção** (cron/scheduler) para documentos e uploads.
-7. Migração de PBKDF2-SHA256 para **Argon2id** quando viável.
+1. ✅ **Backend de rate limit compartilhado**: `sqlite` (mesmo host) e `redis` (vários nós, Lua atômico, extra opcional) — `ADR-0018`.
+2. ✅ **Rotação de `SECRET_KEY`/`ENCRYPTION_KEY` e invalidação de tokens**: rotação (`PREVIOUS_*_KEYS`, CSV/JSON) e revogação persistida no banco (`ADR-0018`).
+3. ✅ **Autenticação no frontend** (login/registro + token em memória) — concluída (`AuthContext.tsx`, `Login.tsx`, `auth.test.tsx`).
+4. **Auditoria de dependências** (`npm audit` / `pip-audit`) contínua no pipeline de CI externo.
+5. ✅ **Cabeçalhos de segurança** (CSP, HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy) adicionados em `frontend/nginx.conf` e `docs/DEPLOYMENT.md`.
+6. ✅ **Rotina agendada de retenção**: implementados `run_retention_sweep`, `prune_expired_uploads` e loop assíncrono configurável via `RETENTION_SWEEP_INTERVAL_SECONDS`.
+7. ✅ **Migração de PBKDF2-SHA256 para Argon2id**: implementada com atualização transparente no login (`needs_rehash`).
 
 ---
 

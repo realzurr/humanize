@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings
 from app.core.database import get_session
 from app.core.errors import RateLimitError, UnauthorizedError
-from app.core.ratelimit import SlidingWindowLimiter, client_ip
+from app.core.ratelimit import RateLimiter, client_ip
 from app.core.security import TokenService
 from app.models.user import User
 from app.services.providers.credentials import CredentialResolver
@@ -96,9 +96,14 @@ def make_rate_limit_dependency(limiter_name: str) -> Callable[[Request], None]:
 
     def dependency(request: Request) -> None:
         limiter = request.app.state.rate_limiters.get(limiter_name)
-        if limiter is None or not isinstance(limiter, SlidingWindowLimiter):
+        if limiter is None or not isinstance(limiter, RateLimiter):
             return
-        key = client_ip(request, trust_proxy=_settings(request).behind_proxy)
+        settings = _settings(request)
+        key = client_ip(
+            request,
+            trust_proxy=settings.behind_proxy,
+            trusted_hops=settings.trusted_proxy_hops,
+        )
         if not limiter.allow(key):
             raise RateLimitError("limite de requisições excedido")
 

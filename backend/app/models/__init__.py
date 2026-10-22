@@ -8,6 +8,7 @@ Alembic.
 from app.models.credential import ProviderCredential
 from app.models.document import Document, DocumentRevision
 from app.models.export import Export
+from app.models.revocation import RevokedSubject, RevokedToken
 from app.models.user import User
 
 __all__ = [
@@ -15,5 +16,7 @@ __all__ = [
     "DocumentRevision",
     "Export",
     "ProviderCredential",
+    "RevokedSubject",
+    "RevokedToken",
     "User",
 ]

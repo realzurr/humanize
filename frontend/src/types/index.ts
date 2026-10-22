@@ -79,6 +79,30 @@ export interface RespostaSaude {
 }
 
 // ---------------------------------------------------------------------------
+// Autenticação (Onda 8 / pós-8)
+// ---------------------------------------------------------------------------
+
+export interface RequisicaoRegistro {
+  username: string;
+  password: string;
+}
+
+export interface RequisicaoLogin {
+  username: string;
+  password: string;
+}
+
+export interface UsuarioOut {
+  id: string;
+  username: string;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+}
+
+// ---------------------------------------------------------------------------
 // Provedores de LLM (Onda 2)
 // ---------------------------------------------------------------------------
 

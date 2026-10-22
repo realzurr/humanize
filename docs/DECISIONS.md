@@ -27,6 +27,9 @@
 | [ADR-0014](decisions/ADR-0014-project-license.md) | Licença MIT, autoria (`realzurr`) e créditos à referência | ✅ Aceita | 2026-10-21 | Alto |
 | [ADR-0015](decisions/ADR-0015-abnt-sources-and-conformity.md) | Conformidade declarada por regra, com fonte e confiança | ✅ Aceita | 2026-10-21 | Alto |
 | [ADR-0016](decisions/ADR-0016-pymupdf-optional-dependency.md) | `pymupdf` como dependência opcional (licenciamento AGPL) | ✅ Aceita | 2026-10-22 | Médio |
+| [ADR-0017](decisions/ADR-0017-security-hardening-post-onda8.md) | Endurecimento de segurança pós-Onda 8 (Argon2id, rotação, rate limit, retenção) | ✅ Aceita (itens 3 e 4 ⛔ substituídos pelo ADR-0018) | 2026-10-22 | Médio |
+| [ADR-0018](decisions/ADR-0018-revocation-redis-key-indirection.md) | Revogação persistida, rate limit Redis e indireção de chaves de LLM | ✅ Aceita | 2026-10-22 | Médio |
+| [ADR-0019](decisions/ADR-0019-key-files-and-logout-all.md) | Chaves de LLM em arquivo e encerramento de todas as sessões | ✅ Aceita | 2026-10-22 | Baixo |
 
 ---
 
@@ -141,6 +144,29 @@ e grau de confiabilidade. A conformidade é declarada **por regra validada**.
 Nenhuma conformidade integral é presumida. Normas protegidas por direitos
 autorais não são reproduzidas na íntegra — apenas estrutura e regras
 parametrizadas.
+
+### ADR-0017 — Endurecimento de segurança pós-Onda 8 ✅
+
+Argon2id (via `cryptography` ≥ 44) com *rehash* no login; rotação de chaves
+por `PREVIOUS_*_KEYS` (CSV ou JSON); revogação de tokens em memória por
+processo (limitação declarada); rate limit `memory`/`sqlite` — `redis` removido
+da configuração até haver cliente e operação atômica; IP do cliente pela
+entrada `-TRUSTED_PROXY_HOPS` do `X-Forwarded-For`; retenção apaga linha e
+arquivo de exportação; inspetor nativo de PDF não declara margens.
+
+### ADR-0018 — Revogação persistida, Redis e cofre de chaves ✅
+
+Revogação de tokens no banco (`REVOCATION_BACKEND=database`, migração `0003`),
+compartilhada entre workers e persistente. Rate limit `redis` com script Lua
+atômico e relógio do servidor, `redis` como extra opcional. Chaves de LLM via
+`<PROVEDOR>_API_KEY_ENV_NAME`, com nomes reservados bloqueados. Teste estático
+dos cabeçalhos do Nginx.
+
+### ADR-0019 — Chaves em arquivo e `logout-all` ✅
+
+`<PROVEDOR>_API_KEY_FILE` (caminho absoluto, ≤ 4 KiB, lido a cada uso) como
+última fonte de ambiente. `POST /auth/logout-all` revoga apenas os tokens do
+próprio usuário; revogação de terceiros aguarda um papel administrativo.
 
 ---
 

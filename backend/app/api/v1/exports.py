@@ -9,17 +9,25 @@ declarada na resposta e apenas DOCX/TXT/Markdown são gerados (`ADR-0012`).
 from __future__ import annotations
 
 import asyncio
+import json
+import re
 import uuid
+from datetime import UTC
 from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, Request, Response
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, owner_id_of
 from app.core.config import Settings
+from app.core.database import get_session
 from app.core.errors import NotFoundError
 from app.core.logging import get_logger
 from app.ir.document import AcademicDocument, DocumentRevision, PipelineStage
+from app.models.export import Export
 from app.models.user import User
+from app.repositories.exports import ExportRepository
 from app.schemas.exports import (
     DocumentHistoryResponse,
     ExportPreviewRequest,
@@ -70,11 +78,80 @@ def _resolver_template(
     return resolvido.template
 
 
+_VERSION_RE = re.compile(r"_v(\d+)_exp_")
+
+
+def _orm_to_record(exp: Export) -> ExportRecord:
+    """Reconstrói um ``ExportRecord`` a partir da linha persistida no ORM."""
+    match = _VERSION_RE.search(exp.filename)
+    versao = int(match.group(1)) if match else 1
+    criado = exp.created_at.replace(tzinfo=UTC) if exp.created_at.tzinfo is None else exp.created_at
+    avisos = tuple(str(x) for x in json.loads(exp.warnings_json or "[]"))
+    limitacoes = tuple(str(x) for x in json.loads(exp.limitations_json or "[]"))
+    return ExportRecord(
+        id=exp.id,
+        document_id=exp.document_id or "documento",
+        revision_id=None,
+        version_number=versao,
+        format=ExportFormat(exp.format),
+        filename=exp.filename,
+        sha256=exp.sha256,
+        size_bytes=exp.size_bytes,
+        template_id=exp.template_id,
+        institution_id=exp.institution_id,
+        owner_id=exp.owner_id,
+        created_at=criado,
+        warnings=avisos,
+        limitations=limitacoes,
+    )
+
+
+def _persistir_registros(session: Session, registros: list[ExportRecord]) -> None:
+    repo = ExportRepository(session)
+    try:
+        for rec in registros:
+            repo.save(
+                export_id=rec.id,
+                document_id=rec.document_id,
+                owner_id=rec.owner_id,
+                fmt=rec.format.value,
+                filename=rec.filename,
+                sha256=rec.sha256,
+                size_bytes=rec.size_bytes,
+                template_id=rec.template_id,
+                institution_id=rec.institution_id,
+                warnings=rec.warnings,
+                limitations=rec.limitations,
+                created_at=rec.created_at.replace(tzinfo=None),
+            )
+    except OperationalError:
+        session.rollback()
+
+
+def _listar_persistidos(
+    session: Session, owner_id: str | None, document_id: str | None = None
+) -> list[Export]:
+    try:
+        return ExportRepository(session).list_for_owner(owner_id, document_id=document_id)
+    except OperationalError:
+        session.rollback()
+        return []
+
+
+def _buscar_persistido(session: Session, export_id: str, owner_id: str | None) -> Export | None:
+    try:
+        return ExportRepository(session).get(export_id, owner_id)
+    except OperationalError:
+        session.rollback()
+        return None
+
+
 @router.post("/exports", response_model=ExportResponse)
 async def exportar_documento(
     corpo: ExportRequest,
     request: Request,
     usuario: Annotated[User | None, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> ExportResponse:
     """Gera as exportações solicitadas (DOCX, PDF, TXT, Markdown) e registra no histórico."""
     registry = _template_registry(request)
@@ -225,6 +302,7 @@ async def exportar_documento(
             )
         )
 
+    _persistir_registros(session, registros)
     preview = generate_preview(doc_atualizado, template)
 
     logger.info(
@@ -270,11 +348,17 @@ async def pre_visualizar_documento(
 async def listar_exportacoes(
     request: Request,
     usuario: Annotated[User | None, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_session)],
     document_id: str | None = None,
 ) -> list[ExportRecord]:
-    """Lista o histórico de exportações do usuário."""
+    """Lista o histórico de exportações do usuário (memória + banco relacional)."""
     store = _export_store(request)
-    return store.list_records(document_id=document_id, owner_id=owner_id_of(usuario))
+    owner = owner_id_of(usuario)
+    em_memoria = {r.id: r for r in store.list_records(document_id=document_id, owner_id=owner)}
+    for exp in _listar_persistidos(session, owner, document_id=document_id):
+        if exp.id not in em_memoria:
+            em_memoria[exp.id] = _orm_to_record(exp)
+    return sorted(em_memoria.values(), key=lambda r: r.created_at, reverse=True)
 
 
 @router.get("/exports/documents/{document_id}/history", response_model=DocumentHistoryResponse)
@@ -294,10 +378,16 @@ async def detalhar_exportacao(
     export_id: str,
     request: Request,
     usuario: Annotated[User | None, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> ExportRecord:
     """Devolve os metadados e o relatório de inspeção de uma exportação."""
     store = _export_store(request)
-    record = store.get(export_id, owner_id_of(usuario))
+    owner = owner_id_of(usuario)
+    record = store.get(export_id, owner)
+    if record is None:
+        persistido = _buscar_persistido(session, export_id, owner)
+        if persistido is not None:
+            record = _orm_to_record(persistido)
     if record is None:
         raise NotFoundError(f"Exportação não encontrada: {export_id}")
     return record
@@ -308,13 +398,23 @@ async def baixar_exportacao(
     export_id: str,
     request: Request,
     usuario: Annotated[User | None, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> Response:
     """Faz o download do arquivo exportado."""
     store = _export_store(request)
-    record = store.get(export_id, owner_id_of(usuario))
+    settings = _settings(request)
+    owner = owner_id_of(usuario)
+    record = store.get(export_id, owner)
+    conteudo = store.read_bytes(export_id, owner)
+    if record is None:
+        persistido = _buscar_persistido(session, export_id, owner)
+        if persistido is not None:
+            record = _orm_to_record(persistido)
+            caminho = (settings.export_dir.resolve() / record.filename).resolve()
+            if caminho.is_relative_to(settings.export_dir.resolve()) and caminho.exists():
+                conteudo = caminho.read_bytes()
     if record is None:
         raise NotFoundError(f"Exportação não encontrada: {export_id}")
-    conteudo = store.read_bytes(export_id, owner_id_of(usuario))
     if conteudo is None:
         raise NotFoundError(f"Arquivo da exportação {export_id} não encontrado em disco.")
     media_type = MEDIA_TYPES[record.format]

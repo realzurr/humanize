@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import re
+import time
 from io import BytesIO
 
 from docx import Document as DocxDocument
@@ -90,3 +91,30 @@ def store_upload(storage_dir: str, filename: str, data: bytes) -> str:
     with open(destino, "wb") as arquivo:
         arquivo.write(data)
     return destino
+
+
+def prune_expired_uploads(
+    storage_dir: str | os.PathLike[str],
+    *,
+    retention_days: int,
+    now_epoch: float | None = None,
+) -> int:
+    """Remove arquivos de upload cuja modificação excede ``retention_days``."""
+    raiz = os.path.abspath(os.fspath(storage_dir))
+    if not os.path.isdir(raiz):
+        return 0
+    referencia = now_epoch if now_epoch is not None else time.time()
+    limite = referencia - (retention_days * 86400)
+    removidos = 0
+    for dirpath, _dirnames, filenames in os.walk(raiz):
+        for nome in filenames:
+            caminho = os.path.abspath(os.path.join(dirpath, nome))
+            if not caminho.startswith(raiz + os.sep):
+                continue
+            try:
+                if os.path.getmtime(caminho) < limite:
+                    os.unlink(caminho)
+                    removidos += 1
+            except OSError:
+                continue
+    return removidos

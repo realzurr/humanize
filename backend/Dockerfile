@@ -19,8 +19,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
         libreoffice-writer \
     && rm -rf /var/lib/apt/lists/*
 
+# Extras opcionais separados por vírgula (ex.: "redis" ou "redis,pdf").
+ARG EXTRAS=""
+
 COPY pyproject.toml ./
-RUN pip install --upgrade pip && pip install .
+RUN pip install --upgrade pip && pip install ".${EXTRAS:+[$EXTRAS]}"
 
 COPY . .
 

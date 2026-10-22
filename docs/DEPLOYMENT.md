@@ -34,6 +34,7 @@ variáveis são lidas por `app/core/config.py` (pydantic-settings).
 | `DATABASE_URL` | URL SQLAlchemy do banco (PostgreSQL em produção). | `postgresql+psycopg://user:pass@host:5432/humaniza` |
 | `ENCRYPTION_KEY` | Chave AES-GCM (32 bytes, base64) para credenciais persistidas. | `python -c "import base64,os;print(base64.b64encode(os.urandom(32)).decode())"` |
 | `CREDENTIAL_ENCRYPTION_ENABLED` | Grava credenciais cifradas no banco. | `true` |
+| `BEHIND_PROXY` | Habilita leitura de `X-Forwarded-For` pelo rate limiter atrás do proxy reverso. | `true` |
 
 ### Opcionais
 
@@ -42,7 +43,16 @@ variáveis são lidas por `app/core/config.py` (pydantic-settings).
 | `ACCESS_TOKEN_TTL_SECONDS` | `3600` | Validade do token de acesso. |
 | `RATE_LIMIT_LOGIN_PER_MINUTE` | `10` | Limite de tentativas de login (por IP). |
 | `RATE_LIMIT_HUMANIZE_PER_MINUTE` | `30` | Limite de humanizações (por IP). |
+| `RATE_LIMIT_BACKEND` | `memory` | `memory` (por processo) \| `sqlite` (workers do mesmo host, em `STORAGE_DIR/ratelimit.db`) \| `redis` (vários nós; exige `REDIS_URL` e o extra `redis`). |
+| `REDIS_URL` | vazio | Ex.: `redis://redis:6379/0`. Obrigatória com `RATE_LIMIT_BACKEND=redis`. |
+| `REVOCATION_BACKEND` | `database` | Revogação de tokens: `database` (compartilhada e persistente) \| `memory` (por processo). |
+| `<PROVEDOR>_API_KEY_ENV_NAME` | vazio | Nome da variável em que o cofre injeta a chave de LLM (OpenAI, Anthropic, Gemini, compatível). |
+| `<PROVEDOR>_API_KEY_FILE` | vazio | Caminho absoluto de arquivo com a chave (ex.: `/run/secrets/openai_api_key`). Precedência: `*_API_KEY` > `*_ENV_NAME` > `*_FILE`. |
+| `TRUSTED_PROXY_HOPS` | `1` | Nº de proxies confiáveis que anexam ao `X-Forwarded-For` (só com `BEHIND_PROXY=true`). |
 | `DOCUMENT_RETENTION_DAYS` | `30` | Prazo de retenção de documentos/exportações. |
+| `RETENTION_SWEEP_INTERVAL_SECONDS` | `0` | Intervalo da varredura automática de retenção (documentos, exportações e uploads); `0` desliga. |
+| `PREVIOUS_SECRET_KEYS` | vazio | Chaves de assinatura anteriores (CSV ou lista JSON) aceitas durante a rotação. |
+| `PREVIOUS_ENCRYPTION_KEYS` | vazio | Chaves AES-GCM anteriores (CSV ou lista JSON) aceitas na decifragem durante a rotação. |
 | `MAX_UPLOAD_BYTES` | `10485760` | Tamanho máximo de upload (10 MiB). |
 | `PDF_RENDERER` | `libreoffice` | `libreoffice` \| `docx2pdf` \| `none`. |
 | `LIBREOFFICE_BINARY` | `soffice` | Caminho do binário do LibreOffice. |
@@ -97,6 +107,13 @@ server {
     ssl_certificate     /etc/ssl/humaniza/fullchain.pem;
     ssl_certificate_key /etc/ssl/humaniza/privkey.pem;
 
+    # Cabeçalhos de segurança
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';" always;
+
     # Frontend estático + API na mesma origem
     location /api/ {
         proxy_pass http://127.0.0.1:8000;
@@ -112,8 +129,14 @@ server {
 }
 ```
 
+> **Nginx e `add_header`:** um `add_header` declarado dentro de um `location`
+> descarta todos os herdados do `server`. Se algum bloco precisar de cabeçalho
+> próprio (ex.: `Cache-Control` em `/assets/`), repita nele os cabeçalhos de
+> segurança — como faz `frontend/nginx.conf`.
+
 - **TLS**: use Let's Encrypt (`certbot`) ou o TLS do orquestrador.
-- O rate limiter considera o `X-Forwarded-For` para identificar o IP real.
+- Defina `BEHIND_PROXY=true` no backend quando operando atrás do Nginx para que o rate limiter utilize o `X-Forwarded-For` real de cada cliente (sem isso, todos os usuários compartilharão o IP do proxy). Se a API estiver exposta diretamente sem proxy confiável, mantenha `BEHIND_PROXY=false` para impedir falsificação de IP.
+- `$proxy_add_x_forwarded_for` **anexa** o IP visto pelo proxy ao valor enviado pelo cliente; as entradas à esquerda são falsificáveis. O backend usa a entrada na posição `-TRUSTED_PROXY_HOPS`: com um único Nginx, `1`; com Nginx TLS na frente do Nginx do contêiner do frontend, `2`.
 - Sirva o build do frontend (`npm run build` → `frontend/dist`) como estático.
 
 ---
@@ -127,9 +150,11 @@ cd backend
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
-> Para múltiplos workers, use um banco compartilhado (PostgreSQL). O rate
-> limiter em memória é por processo; para limite global use um backend Redis
-> (pendência documentada na revisão de segurança).
+> Para múltiplos workers, use um banco compartilhado (PostgreSQL) e
+> `RATE_LIMIT_BACKEND=sqlite` (mesmo host) ou `redis` (vários nós:
+> `uv pip install -e ".[redis]"` + `REDIS_URL`). A revogação de tokens
+> (`/auth/logout`) fica no banco por padrão (`REVOCATION_BACKEND=database`) e é
+> compartilhada entre workers e nós. Rode `alembic upgrade head` antes do deploy.
 
 ### Frontend
 
@@ -143,6 +168,16 @@ O `frontend/nginx.conf` e o `frontend/Dockerfile` já estão prontos para o
 deploy em contêiner (multi-stage: build do Node → serve com Nginx).
 
 ### Docker Compose
+
+Para testar o rate limit com Redis localmente:
+
+```bash
+BACKEND_EXTRAS=redis RATE_LIMIT_BACKEND=redis \
+  docker compose --profile app --profile redis up --build
+```
+
+O argumento de build `EXTRAS` do `backend/Dockerfile` instala extras opcionais
+(`redis`, `pdf`).
 
 O `docker-compose.yml` na raiz orquestra backend + frontend + banco. Ajuste as
 variáveis de ambiente e as credenciais do banco antes de subir.
@@ -159,9 +194,11 @@ variáveis de ambiente e as credenciais do banco antes de subir.
 
 - **Backup**: faça dump do PostgreSQL (`pg_dump`) com periodicidade compatível
   com a política da instituição; teste a restauração periodicamente.
-- **Retenção**: `POST /api/v1/documents/prune` remove documentos expirados do
-  usuário; as exportações expiradas são removidas pelo `ExportHistoryStore`
-  (`prune_expired`). Considere uma rotina agendada (cron/scheduler).
+- **Retenção**: `POST /api/v1/documents/prune` remove documentos e exportações
+  expirados do usuário (linha no banco e arquivo em `EXPORT_DIR`). Com
+  `RETENTION_SWEEP_INTERVAL_SECONDS > 0`, cada worker executa a varredura
+  completa (`run_retention_sweep`: documentos, exportações e uploads de todos os
+  usuários) periodicamente; falhas são registradas em log e a rotina continua.
 
 ---
 

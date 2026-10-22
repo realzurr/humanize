@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
 import { App } from './App';
+import { AuthProvider } from './context/AuthContext';
 import { DocumentoProvider } from './context/DocumentoContext';
 import './styles/index.css';
 
@@ -15,9 +16,11 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <BrowserRouter>
-      <DocumentoProvider>
-        <App />
-      </DocumentoProvider>
+      <AuthProvider>
+        <DocumentoProvider>
+          <App />
+        </DocumentoProvider>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 );

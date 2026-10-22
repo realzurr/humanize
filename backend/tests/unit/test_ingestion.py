@@ -14,6 +14,7 @@ from app.services.ingestion.guard import (
 from app.services.ingestion.upload import (
     detect_format,
     extract_text,
+    prune_expired_uploads,
     sanitize_filename,
     store_upload,
     validate_size,
@@ -74,3 +75,17 @@ def test_store_upload_rejeita_traversal(tmp_path) -> None:
     assert destino.startswith(str(tmp_path))
     with pytest.raises(ValidationError):
         store_upload(str(tmp_path), "../fora.txt", b"dados")
+
+
+def test_prune_expired_uploads(tmp_path) -> None:
+    import os
+
+    antigo = store_upload(str(tmp_path), "antigo.txt", b"velho")
+    recente = store_upload(str(tmp_path), "recente.txt", b"novo")
+    os.utime(antigo, (1000.0, 1000.0))
+    os.utime(recente, (100_000_000.0, 100_000_000.0))
+
+    removidos = prune_expired_uploads(tmp_path, retention_days=1, now_epoch=100_000_050.0)
+    assert removidos == 1
+    assert not os.path.exists(antigo)
+    assert os.path.exists(recente)

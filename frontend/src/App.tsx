@@ -5,9 +5,10 @@
  * O estado compartilhado do documento é provido pelo `DocumentoProvider`
  * (em `main.tsx`).
  */
-import { NavLink, Route, Routes } from 'react-router-dom';
+import { Link, NavLink, Route, Routes } from 'react-router-dom';
 
 import { ROTAS } from '@/constants/navegacao';
+import { useAuth } from '@/context/AuthContext';
 import { Comparacao } from '@/pages/Comparacao';
 import { Dashboard } from '@/pages/Dashboard';
 import { Editor } from '@/pages/Editor';
@@ -15,20 +16,43 @@ import { Exportacao } from '@/pages/Exportacao';
 import { Historico } from '@/pages/Historico';
 import { Humanizacao } from '@/pages/Humanizacao';
 import { Llm } from '@/pages/Llm';
+import { Login } from '@/pages/Login';
 import { Normalizacao } from '@/pages/Normalizacao';
 import { Perfis } from '@/pages/Perfis';
 import { Templates } from '@/pages/Templates';
 import { Validador } from '@/pages/Validador';
 
 export function App() {
+  const { usuario, sair } = useAuth();
+
   return (
     <div className="min-h-screen bg-surface-muted text-gray-900">
-      <header className="border-b border-surface-border bg-surface px-4 py-3">
-        <h1 className="text-lg font-semibold">Humaniza Acadêmico</h1>
-        <p className="text-sm text-gray-600">
-          Normalize, humanize, valide e exporte seu trabalho acadêmico com proteção de
-          dados científicos e conformidade ABNT.
-        </p>
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-surface-border bg-surface px-4 py-3">
+        <div>
+          <h1 className="text-lg font-semibold">Humaniza Acadêmico</h1>
+          <p className="text-sm text-gray-600">
+            Normalize, humanize, valide e exporte seu trabalho acadêmico com proteção de
+            dados científicos e conformidade ABNT.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {usuario ? (
+            <button
+              type="button"
+              onClick={() => void sair()}
+              className="rounded border border-surface-border px-3 py-1 text-xs font-medium hover:bg-surface-muted"
+            >
+              Sair · {usuario.username}
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="rounded border border-surface-border px-3 py-1 text-xs font-medium hover:bg-surface-muted"
+            >
+              Entrar
+            </Link>
+          )}
+        </div>
       </header>
 
       <div className="flex flex-col md:flex-row">
@@ -58,6 +82,7 @@ export function App() {
         <main className="flex-1 p-6">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/editor" element={<Editor />} />
             <Route path="/normalizacao" element={<Normalizacao />} />
             <Route path="/humanizacao" element={<Humanizacao />} />

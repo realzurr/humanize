@@ -71,6 +71,7 @@ def app_with_auth(app_with_db):
     """Aplicação com autenticação habilitada e chave de token configurada."""
     from app.core.config import Settings
     from app.core.security import TokenService
+    from app.repositories.revocations import SqlRevocationStore
 
     settings = Settings(
         secret_key="segredo-de-teste-suficientemente-longo-123",
@@ -78,5 +79,7 @@ def app_with_auth(app_with_db):
         environment="test",
     )
     app_with_db.state.settings = settings
-    app_with_db.state.token_service = TokenService(settings.secret_key)
+    app_with_db.state.token_service = TokenService(
+        settings.secret_key, revocation_store=SqlRevocationStore(app_with_db.state.session_factory)
+    )
     return app_with_db

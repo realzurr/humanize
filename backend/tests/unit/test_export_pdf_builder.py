@@ -105,6 +105,51 @@ def test_compare_docx_and_pdf_detects_margin_violation_and_orphan_heading(
     assert "título órfão" in report.undue_breaks[0]
 
 
+def test_compare_docx_and_pdf_fallback_nativo_sem_pymupdf(
+    template_registry: TemplateRegistry,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.services.document_export import pdf_builder
+
+    monkeypatch.setattr(pdf_builder, "_abrir_pdf", lambda _b: None)
+    template = template_registry.get("abnt.tcc")
+    doc = AcademicDocument(
+        id="doc-cmp-nativo",
+        original_text="# Introdução\n\nParágrafo.",
+        metadata=DocumentMetadata(title="Título", author="Autor", year="2026"),
+    )
+    docx_res = build_docx(doc, template, include_pre_textual=True)
+    # PDF sintético mínimo com 1 página A4 (595.28 x 841.89 pt)
+    pdf_sintetico = (
+        b"%PDF-1.4\n1 0 obj << /Type /Page /MediaBox [0 0 595.28 841.89] >> endobj\n%%EOF\n"
+    )
+    report = compare_docx_and_pdf(docx_res.content, pdf_sintetico, template)
+    assert report.page_count == 1
+    assert report.page_size_matches_docx is True
+    assert report.pagination_valid is True
+    assert report.margins_respected is False
+    assert any("margens" in item for item in report.limitations)
+
+
+def test_inspetor_nativo_declara_limitacao_em_pdf_sem_paginas_visiveis(
+    template_registry: TemplateRegistry,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.services.document_export import pdf_builder
+
+    monkeypatch.setattr(pdf_builder, "_abrir_pdf", lambda _b: None)
+    template = template_registry.get("abnt.tcc")
+    doc = AcademicDocument(id="doc-objstm", original_text="# Introdução\n\nParágrafo.")
+    docx_res = build_docx(doc, template, include_pre_textual=False)
+    pdf_comprimido = b"%PDF-1.5\n1 0 obj << /Type /ObjStm /N 3 >> stream\nxyz\nendstream\n%%EOF\n"
+
+    report = compare_docx_and_pdf(docx_res.content, pdf_comprimido, template)
+
+    assert report.page_count == 0
+    assert report.pagination_valid is False
+    assert any("comprimida" in item for item in report.limitations)
+
+
 @pytest.mark.integration
 async def test_build_pdf_with_libreoffice_when_installed(
     template_registry: TemplateRegistry,
@@ -133,3 +178,31 @@ async def test_build_pdf_with_libreoffice_when_installed(
     assert pdf_res.comparison.page_count >= 1
     assert pdf_res.comparison.page_size_matches_docx is True
     assert pdf_res.comparison.pagination_valid is True
+
+
+@pytest.mark.integration
+async def test_inspetor_nativo_com_pdf_real_do_libreoffice(
+    template_registry: TemplateRegistry,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    if not is_pdf_renderer_available("libreoffice", "soffice"):
+        pytest.skip("LibreOffice não instalado neste ambiente")
+
+    from app.services.document_export import pdf_builder
+
+    monkeypatch.setattr(pdf_builder, "_abrir_pdf", lambda _b: None)
+    template = template_registry.get("abnt.tcc")
+    doc = AcademicDocument(
+        id="doc-lo-nativo",
+        original_text="# Introdução\n\nTexto acadêmico renderizado em processo isolado.",
+        metadata=DocumentMetadata(title="Teste PDF", author="Autor", year="2026"),
+    )
+    docx_res = build_docx(doc, template, include_pre_textual=True)
+    pdf_res = await build_pdf_from_docx(
+        docx_res.content, template, renderer="libreoffice", libreoffice_binary="soffice"
+    )
+
+    assert pdf_res.comparison is not None
+    assert pdf_res.comparison.page_count >= 1
+    assert pdf_res.comparison.page_size_matches_docx is True
+    assert pdf_res.comparison.margins_respected is False

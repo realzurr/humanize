@@ -22,7 +22,7 @@ class Export(Base):
     __tablename__ = "exports"
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
-    document_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    document_id: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
     owner_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
     format: Mapped[str] = mapped_column(String(10))
     filename: Mapped[str] = mapped_column(String(255))
