@@ -628,18 +628,27 @@ Entidades previstas:
 
 ## 9. Frontend
 
-React 18 + TypeScript + Vite + Tailwind. Páginas previstas (Onda 7):
-Dashboard, Editor, Normalização, Humanização, Comparação, Templates ABNT,
-Validador, Histórico, Perfis autorais, Configurações de LLM, Exportação.
+React 18 + TypeScript + Vite + Tailwind. Onze páginas implementadas na
+Onda 7: Dashboard, Editor, Normalização, Humanização, Comparação, Templates
+ABNT, Validador, Histórico, Perfis autorais, Configurações de LLM e
+Exportação.
 
 Princípios:
 
 - **Segredos nunca no `localStorage`/`sessionStorage`.** A chave do LLM é
-  enviada ao backend por HTTPS e mantida apenas no backend.
+  enviada ao backend por HTTPS e mantida apenas no backend; a API expõe
+  somente `configured`/`last4`.
 - O editor exibe comparação lado a lado com diff por trecho, aceitação e
-  rejeição por sugestão, e restauração do texto original.
+  rejeição por sugestão, e restauração do texto original
+  (`RevisorDiff`, `utils/revisao.ts`).
+- O estado do documento é compartilhado em memória (`DocumentoContext`) entre
+  as telas do fluxo — a persistência multiusuário pertence à Onda 8.
 - Cada chamada da API devolve também o **relatório da etapa** (contagens por
   regra, achados de validação, custo estimado, tokens).
+
+Qualidade: ESLint (flat config), `tsc --noEmit` estrito, Vitest (jsdom +
+Testing Library) e Playwright (E2E do fluxo principal com API mockada,
+incluindo a verificação de ausência de segredos no navegador).
 
 ---
 

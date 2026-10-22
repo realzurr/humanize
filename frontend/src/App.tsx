@@ -1,26 +1,24 @@
 /**
  * Raiz da aplicação.
  *
- * A Onda 0 entrega apenas o esqueleto de navegação. As onze telas
- * funcionais são implementadas na Onda 7.
+ * Define o layout com navegação lateral e registra as onze rotas da Onda 7.
+ * O estado compartilhado do documento é provido pelo `DocumentoProvider`
+ * (em `main.tsx`).
  */
 import { NavLink, Route, Routes } from 'react-router-dom';
 
+import { ROTAS } from '@/constants/navegacao';
+import { Comparacao } from '@/pages/Comparacao';
+import { Dashboard } from '@/pages/Dashboard';
+import { Editor } from '@/pages/Editor';
+import { Exportacao } from '@/pages/Exportacao';
+import { Historico } from '@/pages/Historico';
+import { Humanizacao } from '@/pages/Humanizacao';
+import { Llm } from '@/pages/Llm';
 import { Normalizacao } from '@/pages/Normalizacao';
-
-const PAGINAS_PREVISTAS = [
-  { caminho: '/', rotulo: 'Dashboard' },
-  { caminho: '/editor', rotulo: 'Editor' },
-  { caminho: '/normalizacao', rotulo: 'Normalização' },
-  { caminho: '/humanizacao', rotulo: 'Humanização' },
-  { caminho: '/comparacao', rotulo: 'Comparação' },
-  { caminho: '/templates', rotulo: 'Templates ABNT' },
-  { caminho: '/validador', rotulo: 'Validador' },
-  { caminho: '/historico', rotulo: 'Histórico' },
-  { caminho: '/perfis', rotulo: 'Perfis autorais' },
-  { caminho: '/llm', rotulo: 'Configurações de LLM' },
-  { caminho: '/exportacao', rotulo: 'Exportação' },
-] as const;
+import { Perfis } from '@/pages/Perfis';
+import { Templates } from '@/pages/Templates';
+import { Validador } from '@/pages/Validador';
 
 export function App() {
   return (
@@ -28,15 +26,18 @@ export function App() {
       <header className="border-b border-surface-border bg-surface px-4 py-3">
         <h1 className="text-lg font-semibold">Humaniza Acadêmico</h1>
         <p className="text-sm text-gray-600">
-          Onda 0 concluída: arquitetura, contratos e ferramentas. A normalização
-          textual (Onda 1) está disponível em “Normalização”.
+          Normalize, humanize, valide e exporte seu trabalho acadêmico com proteção de
+          dados científicos e conformidade ABNT.
         </p>
       </header>
 
-      <div className="flex">
-        <nav aria-label="Navegação principal" className="w-64 shrink-0 border-r border-surface-border bg-surface p-3">
-          <ul className="space-y-1">
-            {PAGINAS_PREVISTAS.map((pagina) => (
+      <div className="flex flex-col md:flex-row">
+        <nav
+          aria-label="Navegação principal"
+          className="shrink-0 border-b border-surface-border bg-surface p-3 md:w-64 md:border-b-0 md:border-r"
+        >
+          <ul className="flex flex-wrap gap-1 md:block md:space-y-1">
+            {ROTAS.map((pagina) => (
               <li key={pagina.caminho}>
                 <NavLink
                   to={pagina.caminho}
@@ -57,8 +58,17 @@ export function App() {
         <main className="flex-1 p-6">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/editor" element={<Editor />} />
             <Route path="/normalizacao" element={<Normalizacao />} />
-            <Route path="*" element={<EmConstrucao />} />
+            <Route path="/humanizacao" element={<Humanizacao />} />
+            <Route path="/comparacao" element={<Comparacao />} />
+            <Route path="/templates" element={<Templates />} />
+            <Route path="/validador" element={<Validador />} />
+            <Route path="/historico" element={<Historico />} />
+            <Route path="/perfis" element={<Perfis />} />
+            <Route path="/llm" element={<Llm />} />
+            <Route path="/exportacao" element={<Exportacao />} />
+            <Route path="*" element={<NaoEncontrada />} />
           </Routes>
         </main>
       </div>
@@ -66,35 +76,14 @@ export function App() {
   );
 }
 
-function Dashboard() {
+function NaoEncontrada() {
   return (
-    <section aria-labelledby="titulo-dashboard">
-      <h2 id="titulo-dashboard" className="text-xl font-semibold">
-        Dashboard
-      </h2>
-      <p className="mt-2 max-w-prose text-sm text-gray-700">
-        Fluxo do produto: documento original, normalização textual, identificação da
-        estrutura, extração de elementos protegidos, seleção do perfil autoral,
-        humanização por LLM, validação semântica, comparação e revisão, seleção do
-        template ABNT, formatação determinística, validação acadêmica e exportação.
-      </p>
-      <p className="mt-4 text-sm text-gray-600">
-        Cada etapa é independente. Normalização e formatação não exigem chave de LLM.
-      </p>
-    </section>
-  );
-}
-
-function EmConstrucao() {
-  return (
-    <section aria-labelledby="titulo-construcao" className="rounded border border-surface-border bg-surface p-6">
-      <h2 id="titulo-construcao" className="text-lg font-semibold">
-        Em construção
+    <section aria-labelledby="titulo-404" className="rounded border border-surface-border bg-surface p-6">
+      <h2 id="titulo-404" className="text-lg font-semibold">
+        Página não encontrada
       </h2>
       <p className="mt-2 text-sm text-gray-700">
-        Esta tela será implementada em ondas posteriores. Consulte
-        <code className="mx-1 rounded bg-surface-muted px-1">docs/ROADMAP.md</code>
-        para o escopo previsto.
+        A rota solicitada não existe. Use a navegação lateral para retornar ao fluxo.
       </p>
     </section>
   );

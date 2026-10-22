@@ -17,7 +17,7 @@
 | 4 | Sistema de Templates ABNT | 1 | Templates versionados + gerador de estrutura | ✅ concluída |
 | 5 | Citações, Referências e Validador | 3, 4 | NBR 6023/10520 + relatórios auditáveis | ✅ concluída |
 | 6 | Geração de Documentos | 4, 5 | DOCX nativo + PDF + histórico | ✅ concluída |
-| 7 | Interface e Experiência | 1–6 | 11 páginas + editor comparativo | ⛔ aguardando |
+| 7 | Interface e Experiência | 1–6 | 11 páginas + editor comparativo | ✅ concluída |
 | 8 | Segurança, Testes e Estabilização | 7 | Auth, isolamento, E2E, docs de deploy | ⛔ aguardando |
 
 **Paralelismo possível:** a Onda 4 depende apenas da Onda 1 (normalização) e do
@@ -406,7 +406,7 @@ DOCX de origem · **documentar diferenças e limitações** do renderizador.
 
 ---
 
-## Onda 7 — Interface e Experiência do Usuário
+## Onda 7 — Interface e Experiência do Usuário ✅
 
 **Objetivo:** desenvolver uma experiência visual unificada.
 
@@ -424,16 +424,30 @@ sugestões · restaurar texto original · selecionar trechos específicos ·
 aplicar formatação ao documento inteiro · acompanhar alertas acadêmicos ·
 exibir custos estimados e consumo de tokens.
 
+### Implementado
+
+- **11 páginas** em React 18 + TypeScript + Tailwind, com estado compartilhado
+  do documento em memória (`DocumentoContext`) ligando o fluxo colar →
+  normalizar → humanizar → comparar → template → exportar.
+- **Editor comparativo** (`RevisorDiff`): diff por palavra com agrupamento de
+  sugestões, aceitar/rejeitar por trecho, restaurar o original e composição
+  do texto final para exportação.
+- **Cliente da API** completo (`services/api.ts`) e **tipos** espelhando os
+  schemas Pydantic de todas as ondas anteriores.
+- **Infraestrutura de testes do frontend**: ESLint (flat config), Vitest
+  (jsdom + Testing Library) e Playwright. Unitários: 14 testes; E2E: fluxo
+  principal + verificação de ausência de segredos no navegador.
+
 ### Critérios de aceite
 
-- [ ] Um usuário realiza o fluxo completo **sem** usar comandos técnicos.
-- [ ] Testes Playwright cobrem o fluxo principal (colar → normalizar →
+- [x] Um usuário realiza o fluxo completo **sem** usar comandos técnicos.
+- [x] Testes Playwright cobrem o fluxo principal (colar → normalizar →
       selecionar provedor → humanizar → comparar → template → exportar).
-- [ ] Nenhum segredo em `localStorage`/`sessionStorage` (verificado por
+- [x] Nenhum segredo em `localStorage`/`sessionStorage` (verificado por
       teste automatizado).
-- [ ] Interface responsiva e com componentes acessíveis (navegação por
+- [x] Interface responsiva e com componentes acessíveis (navegação por
       teclado, `aria-label`, contraste).
-- [ ] Relatório da onda em `docs/waves/onda-7.md`.
+- [x] Relatório da onda em `docs/waves/onda-7.md`.
 
 ---
 

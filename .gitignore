@@ -91,6 +91,7 @@ dmypy.json
 node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/*.tsbuildinfo
 frontend/playwright-report/
 frontend/test-results/
 frontend/blob-report/

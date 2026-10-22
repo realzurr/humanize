@@ -8,6 +8,7 @@
  */
 import { useEffect, useState } from 'react';
 
+import { useDocumento } from '@/context/DocumentoContext';
 import { api } from '@/services/api';
 import type {
   OpcoesNormalizacao,
@@ -34,6 +35,7 @@ const ROTULOS: Record<keyof OpcoesNormalizacao, string> = {
 const DEBOUNCE_MS = 420;
 
 export function Normalizacao() {
+  const { definirOriginal, definirNormalizacao } = useDocumento();
   const [texto, setTexto] = useState('');
   const [opcoes, setOpcoes] = useState<OpcoesNormalizacao>(OPCOES_INICIAIS);
   const [resultado, setResultado] = useState<RelatorioNormalizacao | null>(null);
@@ -54,6 +56,7 @@ export function Normalizacao() {
         .normalize({ texto, opcoes })
         .then((relatorio) => {
           setResultado(relatorio);
+          definirNormalizacao(relatorio);
           setErro(null);
         })
         .catch((motivo: unknown) => {
@@ -63,7 +66,7 @@ export function Normalizacao() {
     }, DEBOUNCE_MS);
 
     return () => window.clearTimeout(temporizador);
-  }, [texto, opcoes]);
+  }, [texto, opcoes, definirNormalizacao]);
 
   function alternarOpcao(chave: keyof OpcoesNormalizacao) {
     setOpcoes((atuais) => ({ ...atuais, [chave]: !atuais[chave] }));
@@ -147,7 +150,10 @@ export function Normalizacao() {
           <textarea
             id="entrada"
             value={texto}
-            onChange={(evento) => setTexto(evento.target.value)}
+            onChange={(evento) => {
+              setTexto(evento.target.value);
+              definirOriginal(evento.target.value);
+            }}
             placeholder="Cole aqui o texto a normalizar…"
             className="h-80 w-full rounded border border-surface-border bg-surface p-3 font-mono text-sm"
           />
